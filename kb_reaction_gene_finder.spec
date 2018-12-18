@@ -11,12 +11,12 @@ This module predict potential gene candidates based on exact reactions or reacti
 module reaction_gene_finder {
 
     typedef structure {
-        string workspace;
+        string workspace_name;
         list <string> reaction_set;
     	list <string> smarts_set;
         string query_genome_ref;
-        int number_of_hits_to_report;   /* default 5?  10? */
-    } find_genes_exact_matches;
+        int number_of_hits_to_report;
+    } findGenesExactMatchesParams;
 
 	/*
      for non-exact matches, we would probably add at least two extra parameters,
@@ -49,32 +49,17 @@ module reaction_gene_finder {
        string smarts_id;
        float structural_similarity_score;
        float difference_similarity_score;
-       float structural_distance;     /* (1.0 - structural_similarity_score) */
-       float difference_distance;     /* (1.0 - difference_similarity_score)*/
-       /* note: for this exact case, both similarities will be 1 and
-        both distances will be 0
-       */
        mapping <string, list <string>> top_gene_hits;
-    } gene_hits;
+    } GeneHits;
 
 
     typedef structure {
 
-        list <gene_hits> gene_hits_info;
+        list <GeneHits> gene_hits;
 
-        /*Any metadata from the query
-        how many genomes
-        Uniref info
-        can be added here
-        */
-
-        list <string> reactions;
-        string query_genome_ref;
-        string query_genome_name;
-
-    } find_genes_exact_matches_results;
+    } findGenesExactMatchesResults;
 
 
-    funcdef find_genes_for_exact_rxn_matches(find_genes_exact_matches params) returns (find_genes_exact_matches_results output)
+    funcdef find_genes_from_exact_matches(findGenesExactMatchesParams params) returns (findGenesExactMatchesResults output)
         authentication required;
 };

@@ -50,23 +50,8 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
 
     @classmethod
     def prepareTestData(cls):
-        """This function creates an assembly object for testing"""
-        fasta_content = '>seq1 something soemthing asdf\n' \
-                        'agcttttcat\n' \
-                        '>seq2\n' \
-                        'agctt\n' \
-                        '>seq3\n' \
-                        'agcttttcatgg'
-
-        filename = os.path.join(cls.scratch, 'test1.fasta')
-        with open(filename, 'w') as f:
-            f.write(fasta_content)
-        assemblyUtil = AssemblyUtil(cls.callback_url)
-        cls.assembly_ref = assemblyUtil.save_assembly_from_fasta({
-            'file': {'path': filename},
-            'workspace_name': cls.wsName,
-            'assembly_name': 'TestAssembly'
-        })
+        """This function creates testing objects"""
+        pass
 
     @classmethod
     def tearDownClass(cls):
@@ -78,28 +63,11 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     def test_run_kb_reaction_gene_finder_ok(self):
         # call your implementation
-        ret = self.serviceImpl.run_kb_reaction_gene_finder(self.ctx,
-                                                {'workspace_name': self.wsName,
-                                                 'assembly_input_ref': self.assembly_ref,
-                                                 'min_length': 10
-                                                 })
-
-        # Validate the returned data
-        self.assertEqual(ret[0]['n_initial_contigs'], 3)
-        self.assertEqual(ret[0]['n_contigs_removed'], 1)
-        self.assertEqual(ret[0]['n_contigs_remaining'], 2)
-
-    def test_run_kb_reaction_gene_finder_min_len_negative(self):
-        with self.assertRaisesRegex(ValueError, 'min_length parameter cannot be negative'):
-            self.serviceImpl.run_kb_reaction_gene_finder(self.ctx,
-                                              {'workspace_name': self.wsName,
-                                               'assembly_input_ref': '1/fake/3',
-                                               'min_length': '-10'})
-
-    def test_run_kb_reaction_gene_finder_min_len_parse(self):
-        with self.assertRaisesRegex(ValueError, 'Cannot parse integer from min_length parameter'):
-            self.serviceImpl.run_kb_reaction_gene_finder(self.ctx,
-                                              {'workspace_name': self.wsName,
-                                               'assembly_input_ref': '1/fake/3',
-                                               'min_length': 'ten'})
+        ret = self.serviceImpl.find_genes_from_exact_matches(
+            self.ctx,
+            {'workspace_name': self.wsName,
+             'reaction_set': ['rxn000371'],
+             'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
+             'number_of_hits_to_report': 10
+             })
 

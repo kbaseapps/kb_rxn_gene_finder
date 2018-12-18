@@ -3,12 +3,8 @@
 # The header block is where all import statments should live
 import logging
 import os
-from pprint import pformat
 
-from Bio import SeqIO
-
-from installed_clients.AssemblyUtilClient import AssemblyUtil
-from installed_clients.KBaseReportClient import KBaseReport
+from kb_reaction_gene_finder.core import app_skeleton
 #END_HEADER
 
 
@@ -31,7 +27,7 @@ matching uniref sequence mapped from the modelseed set
     # the latter method is running.
     ######################################### noqa
     VERSION = "0.0.1"
-    GIT_URL = "https://github.com/janakagithub/kb_rxn_gene_finder.git"
+    GIT_URL = "https://github.com/kbaseapps/kb_rxn_gene_finder.git"
     GIT_COMMIT_HASH = "b3b49759b73bb1f5b251c8e90b661179d7c326cc"
 
     #BEGIN_CLASS_HEADER
@@ -55,26 +51,23 @@ matching uniref sequence mapped from the modelseed set
 
     def find_genes_for_exact_rxn_matches(self, ctx, params):
         """
-        :param params: instance of type "find_genes_exact_matches" ->
-           structure: parameter "workspace" of String, parameter
+        :param params: instance of type "findGenesExactMatchesParams" ->
+           structure: parameter "workspace_name" of String, parameter
            "reaction_set" of list of String, parameter "smarts_set" of list
            of String, parameter "query_genome_ref" of String, parameter
            "number_of_hits_to_report" of Long
-        :returns: instance of type "find_genes_exact_matches_results" ->
-           structure: parameter "gene_hits_info" of list of type "gene_hits"
-           -> structure: parameter "reaction_id" of String, parameter
+        :returns: instance of type "findGenesExactMatchesResults" ->
+           structure: parameter "gene_hits" of list of type "GeneHits" ->
+           structure: parameter "reaction_id" of String, parameter
            "smarts_id" of String, parameter "structural_similarity_score" of
            Double, parameter "difference_similarity_score" of Double,
-           parameter "structural_distance" of Double, parameter
-           "difference_distance" of Double, parameter "top_gene_hits" of
-           mapping from String to list of String, parameter "reactions" of
-           list of String, parameter "query_genome_ref" of String, parameter
-           "query_genome_name" of String
+           parameter "top_gene_hits" of mapping from String to list of String
         """
         # ctx is the context object
         # return variables are: output
-        #BEGIN find_genes_for_exact_rxn_matches
-        #END find_genes_for_exact_rxn_matches
+        #BEGIN find_genes_from_exact_matches
+        output = app_skeleton.find_genes_from_exact_matches(params)
+        #END find_genes_from_exact_matches
 
         # At some point might do deeper type checking...
         if not isinstance(output, dict):
