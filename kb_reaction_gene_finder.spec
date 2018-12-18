@@ -22,30 +22,26 @@ module reaction_gene_finder {
      for non-exact matches, we would probably add at least two extra parameters,
      which would be cutoff thresholds for the two similarity scores
 	*/
+
     typedef structure{
         string query_gene_id;          /* this is users "unannotated" gene */
-        string subject_gene_id;        /* this is the matching modelseed gene id */
-        string subject_genome;         /* this is the matching modelseed genome id */
-        /*
-         maybe we should include a flag or fieldfor "Modelseed" or "KEGG"?
-        /*
-        string uniref50_cluster_id;    /* blank if not using uniref */
+        string subject_gene_id;        /* this is the matching modelseed/KEGG gene id */
+        string subject_genome;         /* this is the matching modelseed/KEGG genome id */
+        string subject_genome_ref;	   /* this is the matching modelseed/KEGG genome ref */
+        string gene_db;                /* field for "Modelseed" or "KEGG" */
+
+		/*
+		I'm adding in an option for using UniRef50 or not
+        string Uniref cluster_id blank if not using uniref */
+
+        string uniref50_cluster_id;
 
         float  blast_score;            /* these four come from the blast report*/
         float  percent_identity;
         float  match_length;
         float  coverage;
-        float  frequency;    /* ? not sure what this is, left it in*/
+        float  frequency;    /* Frequency as to how common this gene occurs in genomes */
     } top_gene_hits;
-
-
-    typedef structure{
-        /* I'm adding in an option for using UniRef50 or not
-        string Uniref cluster_id
-        */
-        string genome_id;
-        mapping <string, list <string>> gene_ids_scores;
-    } gene_ids_by_genome;
 
 
     typedef structure{
@@ -69,6 +65,7 @@ module reaction_gene_finder {
         /*Any metadata from the query
         how many genomes
         Uniref info
+        can be added here
         */
 
         list <string> reactions;
@@ -78,6 +75,6 @@ module reaction_gene_finder {
     } find_genes_exact_matches_results;
 
 
-    funcdef find_genes_from_exact_matches(find_genes_exact_matches params) returns (find_genes_exact_matches_results output)
+    funcdef find_genes_for_exact_rxn_matches(find_genes_exact_matches params) returns (find_genes_exact_matches_results output)
         authentication required;
 };

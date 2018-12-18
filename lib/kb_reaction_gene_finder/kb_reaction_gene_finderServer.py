@@ -338,10 +338,10 @@ class Application(object):
         self.serverlog.set_log_level(6)
         self.rpc_service = JSONRPCServiceCustom()
         self.method_authentication = dict()
-        self.rpc_service.add(impl_reaction_gene_finder.find_genes_from_exact_matches,
-                             name='reaction_gene_finder.find_genes_from_exact_matches',
+        self.rpc_service.add(impl_reaction_gene_finder.find_genes_for_exact_rxn_matches,
+                             name='reaction_gene_finder.find_genes_for_exact_rxn_matches',
                              types=[dict])
-        self.method_authentication['reaction_gene_finder.find_genes_from_exact_matches'] = 'required'  # noqa
+        self.method_authentication['reaction_gene_finder.find_genes_for_exact_rxn_matches'] = 'required'  # noqa
         self.rpc_service.add(impl_reaction_gene_finder.status,
                              name='reaction_gene_finder.status',
                              types=[dict])

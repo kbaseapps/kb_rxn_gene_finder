@@ -1,4 +1,5 @@
 {
+    "name" : "Find genes based on reactions",
     "ver": "0.0.1",
     "authors": [
         "janakakbase"
@@ -7,30 +8,29 @@
     "categories": ["active"],
     "widgets": {
         "input": null,
-        "output": "no-display"
+        "output": "kbaseTabTable"
     },
-    "parameters": [ 
+    "parameters": [
         {
-            "id": "assembly_input_ref",
+            "id": "query_genome_ref",
             "optional": false,
             "advanced": false,
             "allow_multiple": false,
             "default_values": [ "" ],
             "field_type": "text",
             "text_options": {
-                "valid_ws_types": [ "KBaseGenomeAnnotations.Assembly", "KBaseGenomes.ContigSet" ]
+                "valid_ws_types": [ "KBaseGenomes.Genome" ]
             }
         },
         {
-            "id": "min_length",
+            "id": "reaction_set",
             "optional": false,
             "advanced": false,
-            "allow_multiple": false,
-            "default_values": [ "" ],
+            "allow_multiple": true,
+            "default_values": [ "rxn00033" ],
             "field_type": "text",
             "text_options": {
-                "validate_as": "int",
-                "min_integer" : 0
+                "validate_as": "text"
             }
         }
     ],
@@ -38,7 +38,7 @@
         "service-mapping": {
             "url": "",
             "name":"kb_reaction_gene_finder",
-            "method": "run_kb_reaction_gene_finder",
+            "method": "find_genes_for_exact_rxn_matches",
             "input_mapping": [
                 {
                     "narrative_system_variable": "workspace",
@@ -47,12 +47,12 @@
                     "narrative_system_variable": "workspace_id",
                     "target_property": "workspace_id"
                 },{
-                    "input_parameter": "assembly_input_ref",
-                    "target_property": "assembly_input_ref",
+                    "input_parameter": "query_genome_ref",
+                    "target_property": "query_genome_ref",
                     "target_type_transform": "resolved-ref"
                 },{
-                    "input_parameter": "min_length",
-                    "target_property": "min_length"
+                    "input_parameter": "reaction_set",
+                    "target_property": "reaction_set"
                 }
             ],
             "output_mapping": [

@@ -31,8 +31,8 @@ matching uniref sequence mapped from the modelseed set
     # the latter method is running.
     ######################################### noqa
     VERSION = "0.0.1"
-    GIT_URL = ""
-    GIT_COMMIT_HASH = ""
+    GIT_URL = "https://github.com/janakagithub/kb_rxn_gene_finder.git"
+    GIT_COMMIT_HASH = "b3b49759b73bb1f5b251c8e90b661179d7c326cc"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -53,7 +53,7 @@ matching uniref sequence mapped from the modelseed set
         pass
 
 
-    def find_genes_from_exact_matches(self, ctx, params):
+    def find_genes_for_exact_rxn_matches(self, ctx, params):
         """
         :param params: instance of type "find_genes_exact_matches" ->
            structure: parameter "workspace" of String, parameter
@@ -73,12 +73,12 @@ matching uniref sequence mapped from the modelseed set
         """
         # ctx is the context object
         # return variables are: output
-        #BEGIN find_genes_from_exact_matches
-        #END find_genes_from_exact_matches
+        #BEGIN find_genes_for_exact_rxn_matches
+        #END find_genes_for_exact_rxn_matches
 
         # At some point might do deeper type checking...
         if not isinstance(output, dict):
-            raise ValueError('Method find_genes_from_exact_matches return value ' +
+            raise ValueError('Method find_genes_for_exact_rxn_matches return value ' +
                              'output is not type dict as required.')
         # return the results
         return [output]
