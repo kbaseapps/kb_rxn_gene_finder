@@ -85,12 +85,12 @@
             "optional": false,
             "advanced": false,
             "allow_multiple": false,
-            "default_values": [ "5" ],
+            "default_values": [ "10" ],
             "field_type": "text",
             "text_options": {
                 "validate_as": "int",
                 "min_integer" : 0,
-                "max_integer" : 25
+                "max_integer" : 50
             }
         }
     ],
