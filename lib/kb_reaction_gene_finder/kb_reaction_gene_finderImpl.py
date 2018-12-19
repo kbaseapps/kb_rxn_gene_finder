@@ -4,11 +4,11 @@
 import logging
 import os
 
-from kb_reaction_gene_finder.core import app_skeleton
+from kb_reaction_gene_finder.core.app_impl import AppImpl
 #END_HEADER
 
 
-class reaction_gene_finder:
+class kb_reaction_gene_finder:
     '''
     Module Name:
     reaction_gene_finder
@@ -43,6 +43,7 @@ matching uniref sequence mapped from the modelseed set
         # saved in the constructor.
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.shared_folder = config['scratch']
+        self.config = config
         logging.basicConfig(format='%(created)s %(levelname)s: %(message)s',
                             level=logging.INFO)
         #END_CONSTRUCTOR
@@ -66,7 +67,8 @@ matching uniref sequence mapped from the modelseed set
         # ctx is the context object
         # return variables are: output
         #BEGIN find_genes_from_exact_matches
-        output = app_skeleton.find_genes_from_exact_matches(params)
+        app_impl = AppImpl(self.config, ctx)
+        output = app_impl.find_genes_from_exact_matches(params)
         #END find_genes_from_exact_matches
 
         # At some point might do deeper type checking...

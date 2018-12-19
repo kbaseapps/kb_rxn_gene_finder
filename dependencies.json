@@ -3,6 +3,10 @@
   "type" : "sdk",
   "version_tag" : "release"
 }, {
+  "module_name" : "GenomeFileUtil",
+  "type" : "core",
+  "file_path" : "https://raw.githubusercontent.com/kbaseapps/GenomeFileUtil/master/GenomeFileUtil.spec"
+}, {
   "module_name" : "KBaseReport",
   "type" : "sdk",
   "version_tag" : "release"

@@ -28,6 +28,8 @@ RUN \
   rm -f blast/bin/update_blastdb.pl && \
   rm -f blast/bin/windowmasker
 
+ENV PATH="/kb/module/blast/bin:${PATH}"
+
 
 # -----------------------------------------
 

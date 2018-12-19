@@ -8,7 +8,7 @@ This module predict potential gene candidates based on exact reactions or reacti
                    matching uniref sequence mapped from the modelseed set
                     I
 */
-module reaction_gene_finder {
+module kb_reaction_gene_finder {
 
     typedef structure {
         string workspace_name;

@@ -1,0 +1,47 @@
+#
+# define display information
+#
+name: Find Candidate Genes for a Reaction
+tooltip: |
+    Searches for genes that may perform a reaction based on BLAST of known genes performing similar reactions against a supplied genome
+screenshots: []
+
+icon: null
+
+#
+# define a set of similar methods that might be useful to the user
+#
+suggestions:
+    apps:
+        related:
+            []
+        next:
+            []
+    methods:
+        related:
+            []
+        next:
+            [annotate_contigset]
+
+#
+# Configure the display and description of parameters
+#
+parameters :
+    reaction_set :
+        ui-name : |
+            Reaction
+        short-hint : |
+            The reactions to search a gene candidate
+    query_genome_ref :
+        ui-name : |
+            Target Genome
+        short-hint : |
+            The Target Genome to find matches
+    number_of_hits_to_report :
+        ui-name : |
+            Gene hits per reaction
+        short-hint : |
+            The number of hits to report for each reaction
+description : |
+    <p>This method searches for genes that may perform a reaction based on BLAST of known genes
+    performing similar reactions against a supplied genome</p>

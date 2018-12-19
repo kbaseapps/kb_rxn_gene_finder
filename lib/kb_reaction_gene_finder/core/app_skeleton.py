@@ -1,6 +1,6 @@
-from kb_reaction_gene_finder.core.re_api import RE_API
-from kb_reaction_gene_finder.core import fapi
 import os
+
+from kb_reaction_gene_finder.core import fapi
 
 
 #
@@ -102,7 +102,7 @@ def get_min_index(a):
 # decided not to do this in an fapi since it doesn't touch the graphDB but
 # maybe it should be
 
-def find_best_homologs(query_seq_file, target_seq_file, noise_level=50, number_vals_to_report=5):
+def find_best_homologs(query_seq_file, target_seq_file, noise_level=50, number_vals_to_report=5, threads=4):
     print("running blastp for {0} vs {1}".format(query_seq_file, target_seq_file))
     # wasn't able to get a pipe going
     # proc = subprocess.run( 'blastp -outfmt 6 -subject ' + target_seq_file +' -query ' + query_seq_file,
@@ -114,7 +114,8 @@ def find_best_homologs(query_seq_file, target_seq_file, noise_level=50, number_v
     # so using file output instead
     tmp_blast_output_file = os.path.join("blastp.results" + str(os.getpid()))
 
-    blastp_cmd = f'blastp -outfmt 6 -subject {target_seq_file} -query {query_seq_file} > {tmp_blast_output_file}'
+    blastp_cmd = f'blastp -outfmt 6 -subject {target_seq_file} -num_threads {threads} ' \
+                 f'-query {query_seq_file} > {tmp_blast_output_file}'
     os.system(blastp_cmd)
 
     top_scores = [0] * number_vals_to_report
@@ -179,10 +180,6 @@ def find_candidate_genes_for_reaction(reaction_id, genome_id, max_candidates=5):
     results = find_best_homologs(query_genome_prot_seq_file, target_gene_seq_file,
                                  number_vals_to_report=max_candidates)
     return (results)
-
-
-def find_genes_from_exact_matches(params):
-    raise NotImplementedError
 
 
 # Main program:  make one call for demo

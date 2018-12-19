@@ -3,6 +3,7 @@ import os
 import time
 import unittest
 from configparser import ConfigParser
+from pprint import pprint
 
 from kb_reaction_gene_finder.kb_reaction_gene_finderImpl import kb_reaction_gene_finder
 from kb_reaction_gene_finder.kb_reaction_gene_finderServer import MethodContext
@@ -66,8 +67,9 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
         ret = self.serviceImpl.find_genes_from_exact_matches(
             self.ctx,
             {'workspace_name': self.wsName,
-             'reaction_set': ['rxn000371'],
+             'reaction_set': ['rxn00371', 'foo'],
              'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
              'number_of_hits_to_report': 10
              })
+        pprint(ret)
 

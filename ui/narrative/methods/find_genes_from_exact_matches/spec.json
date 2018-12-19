@@ -1,5 +1,4 @@
 {
-    "name" : "Find genes based on reactions",
     "ver": "0.0.1",
     "authors": [
         "janakakbase"
@@ -8,10 +7,30 @@
     "categories": ["active"],
     "widgets": {
         "input": null,
-        "output": "kbaseTabTable"
+        "output": "no-display"
     },
     "parameters": [
         {
+            "id": "reaction_set",
+            "optional": false,
+            "advanced": false,
+            "allow_multiple": false,
+            "default_values": [],
+            "field_type": "dynamic_dropdown",
+            "dynamic_dropdown_options": {
+                "data_source": "custom",
+                "service_function": "BiochemistryAPI.search_reactions",
+                "service_version": "dev",
+                "service_params": [
+                    {
+                        "query": "{{dynamic_dropdown_input}}"
+                    }
+                ],
+                "selection_id": "id",
+                "description_template": "<strong>{{id}}</strong>: {{name}}",
+                "multiselection": true
+            }
+        },{
             "id": "query_genome_ref",
             "optional": false,
             "advanced": false,
@@ -19,26 +38,28 @@
             "default_values": [ "" ],
             "field_type": "text",
             "text_options": {
-                "valid_ws_types": [ "KBaseGenomes.Genome" ]
+                "valid_ws_types": [ "KBaseGenomeAnnotations.Genome", "KBaseGenomes.Genome" ]
             }
         },
         {
-            "id": "reaction_set",
+            "id": "number_of_hits_to_report",
             "optional": false,
             "advanced": false,
-            "allow_multiple": true,
-            "default_values": [ "rxn00033" ],
+            "allow_multiple": false,
+            "default_values": [ "5" ],
             "field_type": "text",
             "text_options": {
-                "validate_as": "text"
+                "validate_as": "int",
+                "min_integer" : 0,
+                "max_integer" : 25
             }
         }
     ],
     "behavior": {
         "service-mapping": {
             "url": "",
-            "name":"kb_reaction_gene_finder",
-            "method": "find_genes_for_exact_rxn_matches",
+            "name": "kb_reaction_gene_finder",
+            "method": "find_genes_from_exact_matches",
             "input_mapping": [
                 {
                     "narrative_system_variable": "workspace",
@@ -47,12 +68,15 @@
                     "narrative_system_variable": "workspace_id",
                     "target_property": "workspace_id"
                 },{
+                    "input_parameter": "reaction_set",
+                    "target_property": "reaction_set"
+                },{
                     "input_parameter": "query_genome_ref",
                     "target_property": "query_genome_ref",
                     "target_type_transform": "resolved-ref"
                 },{
-                    "input_parameter": "reaction_set",
-                    "target_property": "reaction_set"
+                    "input_parameter": "number_of_hits_to_report",
+                    "target_property": "number_of_hits_to_report"
                 }
             ],
             "output_mapping": [
