@@ -1,7 +1,7 @@
 import logging
 import os
-import time
 import uuid
+from collections import namedtuple
 
 from kb_reaction_gene_finder.core.re_api import RE_API
 from installed_clients.GenomeFileUtilClient import GenomeFileUtil
@@ -43,7 +43,10 @@ class AppImpl:
     def _find_best_homologs(query_seq_file, target_seq_file, noise_level=50,
                             number_vals_to_report=5, threads=4):
         """Blast the query_seq_file against the target_seq_file and return the best hits"""
-        print("running blastp for {0} vs {1}".format(query_seq_file, target_seq_file))
+        logging.info("running blastp for {0} vs {1}".format(query_seq_file, target_seq_file))
+        blast_record = namedtuple('blast_record', ['qseqid', 'sseqid', 'pident', 'length',
+                                                   'mismatch', 'gapopen', 'qstart', 'qend',
+                                                   'sstart', 'send', 'evalue', 'bitscore'])
         # wasn't able to get a pipe going
         # proc = subprocess.run( 'blastp -outfmt 6 -subject ' + target_seq_file +' -query ' + query_seq_file,
         #                       stdout=subprocess.PIPE, shell=True, universal_newline=True )
@@ -63,15 +66,14 @@ class AppImpl:
 
         with open(tmp_blast_output_file) as bl:
             for line in bl:
-                cols = line.strip().split()
-                bl_score = float(cols[11])
+                cols = blast_record(*line.strip().split())
+                bl_score = float(cols.bitscore)
                 if bl_score > noise_level and bl_score > min(top_scores):
                     min_i = top_scores.index(min(top_scores))
                     top_scores[min_i] = bl_score
-                    top_records[min_i] = cols
+                    top_records[min_i] = cols._asdict()
 
-        return ([sorted(top_scores, reverse=True),
-                 sorted(top_records, reverse=True, key=lambda r: r[11])])
+        return sorted(top_records, reverse=True, key=lambda r: r['bitscore'])
 
     def find_genes_from_similar_reactions(self, params):
         self._validate_params(params, {'workspace_name', 'reaction_set', 'query_genome_ref', },
