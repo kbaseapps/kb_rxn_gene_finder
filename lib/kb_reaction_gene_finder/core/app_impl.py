@@ -95,7 +95,7 @@ class AppImpl:
             params.get('structural_similarity_floor', 1),
             params.get('difference_similarity_floor', 1))
         if not search_seqs:
-            return "None found"
+            return []
 
         search_fasta = f'rxn_search_{uuid.uuid4()}.fasta'
         self._make_fasta(search_seqs, search_fasta)
