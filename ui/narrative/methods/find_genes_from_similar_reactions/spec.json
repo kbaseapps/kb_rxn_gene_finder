@@ -28,7 +28,7 @@
                 ],
                 "selection_id": "id",
                 "description_template": "<strong>{{id}}</strong>: {{name}}",
-                "multiselection": true
+                "multiselection": false
             }
         },{
             "id": "query_genome_ref",
