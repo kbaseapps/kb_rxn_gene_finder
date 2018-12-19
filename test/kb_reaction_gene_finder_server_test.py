@@ -64,7 +64,7 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
     # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
     def test_run_kb_reaction_gene_finder_ok(self):
         # call your implementation
-        ret = self.serviceImpl.find_genes_from_exact_matches(
+        ret = self.serviceImpl.find_genes_from_similar_reactions(
             self.ctx,
             {'workspace_name': self.wsName,
              'reaction_set': ['rxn00371', 'foo'],

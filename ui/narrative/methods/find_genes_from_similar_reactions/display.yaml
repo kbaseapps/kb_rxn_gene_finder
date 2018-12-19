@@ -37,6 +37,21 @@ parameters :
             Target Genome
         short-hint : |
             The Target Genome to find matches
+    structural_similarity_floor :
+        ui-name : |
+            Structural Similarity Floor
+        short-hint : |
+            The minimum Tannimoto similarity or a realated reaction based on a structural fingerprint
+    difference_similarity_floor :
+        ui-name : |
+            Difference Similarity Floor
+        short-hint : |
+            The minimum Tannimoto similarity or a realated reaction based on a difference fingerprint
+    blast_score_floor :
+        ui-name : |
+            Blast Score Floor
+        short-hint : |
+            The minimal blast score to consider a gene candidate a possible hit
     number_of_hits_to_report :
         ui-name : |
             Gene hits per reaction

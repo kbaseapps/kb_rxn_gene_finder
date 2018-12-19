@@ -45,14 +45,14 @@ def get_config():
     retconfig = {}
     config = ConfigParser()
     config.read(get_config_file())
-    for nameval in config.items(get_service_name() or 'reaction_gene_finder'):
+    for nameval in config.items(get_service_name() or 'kb_reaction_gene_finder'):
         retconfig[nameval[0]] = nameval[1]
     return retconfig
 
 config = get_config()
 
-from kb_reaction_gene_finder.kb_reaction_gene_finderImpl import reaction_gene_finder  # noqa @IgnorePep8
-impl_reaction_gene_finder = reaction_gene_finder(config)
+from kb_reaction_gene_finder.kb_reaction_gene_finderImpl import kb_reaction_gene_finder  # noqa @IgnorePep8
+impl_kb_reaction_gene_finder = kb_reaction_gene_finder(config)
 
 
 class JSONObjectEncoder(json.JSONEncoder):
@@ -327,7 +327,7 @@ class Application(object):
                                    context['method'], context['call_id'])
 
     def __init__(self):
-        submod = get_service_name() or 'reaction_gene_finder'
+        submod = get_service_name() or 'kb_reaction_gene_finder'
         self.userlog = log.log(
             submod, ip_address=True, authuser=True, module=True, method=True,
             call_id=True, changecallback=self.logcallback,
@@ -338,12 +338,12 @@ class Application(object):
         self.serverlog.set_log_level(6)
         self.rpc_service = JSONRPCServiceCustom()
         self.method_authentication = dict()
-        self.rpc_service.add(impl_reaction_gene_finder.find_genes_for_exact_rxn_matches,
-                             name='reaction_gene_finder.find_genes_for_exact_rxn_matches',
+        self.rpc_service.add(impl_kb_reaction_gene_finder.find_genes_from_similar_reactions,
+                             name='kb_reaction_gene_finder.find_genes_from_similar_reactions',
                              types=[dict])
-        self.method_authentication['reaction_gene_finder.find_genes_for_exact_rxn_matches'] = 'required'  # noqa
-        self.rpc_service.add(impl_reaction_gene_finder.status,
-                             name='reaction_gene_finder.status',
+        self.method_authentication['kb_reaction_gene_finder.find_genes_from_similar_reactions'] = 'required'  # noqa
+        self.rpc_service.add(impl_kb_reaction_gene_finder.status,
+                             name='kb_reaction_gene_finder.status',
                              types=[dict])
         authurl = config.get(AUTH) if config else None
         self.auth_client = _KBaseAuth(authurl)
@@ -398,7 +398,7 @@ class Application(object):
                             err = JSONServerError()
                             err.data = (
                                 'Authentication required for ' +
-                                'reaction_gene_finder ' +
+                                'kb_reaction_gene_finder ' +
                                 'but no authentication header was passed')
                             raise err
                         elif token is None and auth_req == 'optional':

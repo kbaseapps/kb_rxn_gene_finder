@@ -15,8 +15,11 @@ module kb_reaction_gene_finder {
         list <string> reaction_set;
     	list <string> smarts_set;
         string query_genome_ref;
+        float structural_similarity_floor;
+        float difference_similarity_floor;
+        float blast_score_floor;
         int number_of_hits_to_report;
-    } findGenesExactMatchesParams;
+    } findGenesParams;
 
 	/*
      for non-exact matches, we would probably add at least two extra parameters,
@@ -57,9 +60,9 @@ module kb_reaction_gene_finder {
 
         list <GeneHits> gene_hits;
 
-    } findGenesExactMatchesResults;
+    } findGenesResults;
 
 
-    funcdef find_genes_from_exact_matches(findGenesExactMatchesParams params) returns (findGenesExactMatchesResults output)
+    funcdef find_genes_from_similar_reactions(findGenesParams params) returns (findGenesResults output)
         authentication required;
 };

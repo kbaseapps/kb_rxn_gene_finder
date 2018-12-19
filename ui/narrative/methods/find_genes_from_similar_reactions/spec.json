@@ -42,6 +42,45 @@
             }
         },
         {
+            "id": "structural_similarity_floor",
+            "optional": false,
+            "advanced": true,
+            "allow_multiple": false,
+            "default_values": [ "1.0" ],
+            "field_type": "text",
+            "text_options": {
+                "validate_as": "float",
+                "min_float" : 0.0,
+                "max_integer" : 1.0
+            }
+        },
+        {
+            "id": "difference_similarity_floor",
+            "optional": false,
+            "advanced": true,
+            "allow_multiple": false,
+            "default_values": [ "1.0" ],
+            "field_type": "text",
+            "text_options": {
+                "validate_as": "float",
+                "min_float" : 0.0,
+                "max_integer" : 1.0
+            }
+        },
+        {
+            "id": "blast_score_floor",
+            "optional": false,
+            "advanced": true,
+            "allow_multiple": false,
+            "default_values": [ "50.0" ],
+            "field_type": "text",
+            "text_options": {
+                "validate_as": "float",
+                "min_float" : 0.0,
+                "max_integer" : 1000.0
+            }
+        },
+        {
             "id": "number_of_hits_to_report",
             "optional": false,
             "advanced": false,
@@ -59,7 +98,7 @@
         "service-mapping": {
             "url": "",
             "name": "kb_reaction_gene_finder",
-            "method": "find_genes_from_exact_matches",
+            "method": "find_genes_from_similar_reactions",
             "input_mapping": [
                 {
                     "narrative_system_variable": "workspace",
@@ -70,6 +109,15 @@
                 },{
                     "input_parameter": "reaction_set",
                     "target_property": "reaction_set"
+                },{
+                    "input_parameter": "structural_similarity_floor",
+                    "target_property": "structural_similarity_floor"
+                },{
+                    "input_parameter": "difference_similarity_floor",
+                    "target_property": "difference_similarity_floor"
+                },{
+                    "input_parameter": "blast_score_floor",
+                    "target_property": "blast_score_floor"
                 },{
                     "input_parameter": "query_genome_ref",
                     "target_property": "query_genome_ref",

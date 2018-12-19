@@ -11,7 +11,7 @@ from kb_reaction_gene_finder.core.app_impl import AppImpl
 class kb_reaction_gene_finder:
     '''
     Module Name:
-    reaction_gene_finder
+    kb_reaction_gene_finder
 
     Module Description:
     note on terms:  "query" means the unannotaed genes in the users unannotated genome
@@ -28,7 +28,7 @@ matching uniref sequence mapped from the modelseed set
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_rxn_gene_finder.git"
-    GIT_COMMIT_HASH = "b3b49759b73bb1f5b251c8e90b661179d7c326cc"
+    GIT_COMMIT_HASH = "8c2d13cd0cad59f6338fb075b2ed030609796658"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -50,30 +50,33 @@ matching uniref sequence mapped from the modelseed set
         pass
 
 
-    def find_genes_for_exact_rxn_matches(self, ctx, params):
+    def find_genes_from_similar_reactions(self, ctx, params):
         """
-        :param params: instance of type "findGenesExactMatchesParams" ->
-           structure: parameter "workspace_name" of String, parameter
-           "reaction_set" of list of String, parameter "smarts_set" of list
-           of String, parameter "query_genome_ref" of String, parameter
+        :param params: instance of type "findGenesParams" -> structure:
+           parameter "workspace_name" of String, parameter "reaction_set" of
+           list of String, parameter "smarts_set" of list of String,
+           parameter "query_genome_ref" of String, parameter
+           "structural_similarity_floor" of Double, parameter
+           "difference_similarity_floor" of Double, parameter
+           "blast_score_floor" of Double, parameter
            "number_of_hits_to_report" of Long
-        :returns: instance of type "findGenesExactMatchesResults" ->
-           structure: parameter "gene_hits" of list of type "GeneHits" ->
-           structure: parameter "reaction_id" of String, parameter
-           "smarts_id" of String, parameter "structural_similarity_score" of
-           Double, parameter "difference_similarity_score" of Double,
-           parameter "top_gene_hits" of mapping from String to list of String
+        :returns: instance of type "findGenesResults" -> structure: parameter
+           "gene_hits" of list of type "GeneHits" -> structure: parameter
+           "reaction_id" of String, parameter "smarts_id" of String,
+           parameter "structural_similarity_score" of Double, parameter
+           "difference_similarity_score" of Double, parameter "top_gene_hits"
+           of mapping from String to list of String
         """
         # ctx is the context object
         # return variables are: output
-        #BEGIN find_genes_from_exact_matches
+        #BEGIN find_genes_from_similar_reactions
         app_impl = AppImpl(self.config, ctx)
-        output = app_impl.find_genes_from_exact_matches(params)
-        #END find_genes_from_exact_matches
+        output = app_impl.find_genes_from_similar_reactions(params)
+        #END find_genes_from_similar_reactions
 
         # At some point might do deeper type checking...
         if not isinstance(output, dict):
-            raise ValueError('Method find_genes_for_exact_rxn_matches return value ' +
+            raise ValueError('Method find_genes_from_similar_reactions return value ' +
                              'output is not type dict as required.')
         # return the results
         return [output]
