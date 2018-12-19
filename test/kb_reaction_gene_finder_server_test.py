@@ -66,7 +66,7 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
         ret = self.serviceImpl.find_genes_from_similar_reactions(
             self.ctx,
             {'workspace_name': self.wsName,
-             'reaction_set': ['rxn00010'],
+             'reaction_set': 'rxn00010',
              'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
              'number_of_hits_to_report': 10
              })
