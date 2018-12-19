@@ -87,6 +87,10 @@ class AppImpl:
              'include_functions': True,
              'include_aliases': False})['file_path']
 
+        # TODO: fix UI so I don't have to use this hack
+        if isinstance(params['reaction_set'], str):
+            params['reaction_set'] = [params['reaction_set']]
+
         output = {'gene_hits': [self.find_genes_for_rxn(rxn, feature_seq_path, params)
                                 for rxn in params['reaction_set']]}
         output.update(self._build_report(params['reaction_set'],
