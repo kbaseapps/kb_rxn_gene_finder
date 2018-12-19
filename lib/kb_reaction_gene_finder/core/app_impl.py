@@ -5,6 +5,7 @@ from collections import namedtuple
 
 from kb_reaction_gene_finder.core.re_api import RE_API
 from installed_clients.GenomeFileUtilClient import GenomeFileUtil
+from installed_clients.KBaseReportClient import KBaseReport
 
 
 class AppImpl:
@@ -13,6 +14,7 @@ class AppImpl:
         self.scratch = config['scratch']
         self.re_api = RE_API(config['re-api'], ctx['token'])
         self.gfu = GenomeFileUtil(self.callback_url)
+        self.kbr = KBaseReport(self.callback_url)
 
     @staticmethod
     def _validate_params(params, required, optional=set()):
@@ -82,11 +84,16 @@ class AppImpl:
 
         feature_seq_path = self.gfu.genome_proteins_to_fasta(
             {'genome_ref': params['query_genome_ref'],
-             'include_functions': False,
+             'include_functions': True,
              'include_aliases': False})['file_path']
-        # TODO: add in a report
-        return {'gene_hits': [self.find_genes_for_rxn(rxn, feature_seq_path, params)
-                              for rxn in params['reaction_set']]}
+
+        output = {'gene_hits': [self.find_genes_for_rxn(rxn, feature_seq_path, params)
+                                for rxn in params['reaction_set']]}
+        output.update(self._build_report(params['reaction_set'],
+                                         output['gene_hits'],
+                                         params['workspace_name'],
+                                         ))
+        return output
 
     def find_genes_for_rxn(self, reaction, genome_feature_path, params):
         """Finds genes for a particular reaction using RE and BLAST"""
@@ -102,5 +109,68 @@ class AppImpl:
 
         return self._find_best_homologs(search_fasta,
                                         genome_feature_path,
-                                        params.get('number_vals_to_report', 5),
-                                        params.get('blast_score_floor', 50))
+                                        params.get('blast_score_floor', 50),
+                                        params.get('number_vals_to_report', 5))
+
+    def _build_report(self, reactions, gene_hits, workspace_name):
+        """
+                _generate_report: generate summary report for upload
+                """
+        output_html_files = self._generate_report_html(reactions, gene_hits)
+
+        report_params = {
+            'html_links': output_html_files,
+            'direct_html_link_index': 0,
+            #'objects_created': [{'ref': pdb_obj_ref,
+            #                     'description': 'Imported PDB'}],
+            'workspace_name': workspace_name,
+            'report_object_name': 'find_genes_for_rxn_' + str(uuid.uuid4())}
+
+        output = self.kbr.create_extended_report(report_params)
+
+        report_output = {'report_name': output['name'], 'report_ref': output['ref']}
+
+        return report_output
+
+    def _generate_report_html(self, reactions, gene_hits):
+        """
+            _generate_report: generates the HTML for the upload report
+        """
+        html_report = list()
+
+        # Make report directory and copy over files
+        output_directory = os.path.join(self.scratch, str(uuid.uuid4()))
+        os.mkdir(output_directory)
+        result_file_path = os.path.join(output_directory, 'find_genes_for_rxn.html')
+
+        # Build HTML tables for results
+        tables = []
+        for rxn, hits in zip(reactions, gene_hits):
+            tables.append(f'<h3 style="text-align: center">{rxn}</h3>')
+            if not hits:
+                tables.append("<h5>No hits found!</h5>")
+                continue
+            tables.append('<table class="table table-bordered table-striped">')
+            header = "</td><td>".join(hits[0].keys())
+            tables.append(f'\t<thead><tr><td>{header}</td></tr></thead>')
+            tables.append('\t<tbody>')
+            for row in hits:
+                line = "</td><td>".join(row.values())
+                tables.append(f'\t\t<tr><td>{line}</td></tr>')
+            tables.append('\t</tbody>')
+            tables.append('</table>\n')
+
+        # Fill in template HTML
+        with open(os.path.join(os.path.dirname(__file__), 'find_genes_for_rxn_template.html')
+                  ) as report_template_file:
+            report_template = report_template_file.read() \
+                .replace('*TABLES*', "\n".join(tables))
+
+        with open(result_file_path, 'w') as result_file:
+            result_file.write(report_template)
+
+        html_report.append({'path': output_directory,
+                            'name': os.path.basename(result_file_path),
+                            'description': 'HTML report for reaction to gene candidates app'})
+
+        return html_report

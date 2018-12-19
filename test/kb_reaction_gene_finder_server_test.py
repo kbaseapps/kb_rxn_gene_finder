@@ -9,7 +9,6 @@ from kb_reaction_gene_finder.kb_reaction_gene_finderImpl import kb_reaction_gene
 from kb_reaction_gene_finder.kb_reaction_gene_finderServer import MethodContext
 from kb_reaction_gene_finder.authclient import KBaseAuth as _KBaseAuth
 
-from installed_clients.AssemblyUtilClient import AssemblyUtil
 from installed_clients.WorkspaceClient import Workspace
 
 
@@ -67,7 +66,7 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
         ret = self.serviceImpl.find_genes_from_similar_reactions(
             self.ctx,
             {'workspace_name': self.wsName,
-             'reaction_set': ['rxn00371', 'foo'],
+             'reaction_set': ['rxn00010'],
              'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
              'number_of_hits_to_report': 10
              })

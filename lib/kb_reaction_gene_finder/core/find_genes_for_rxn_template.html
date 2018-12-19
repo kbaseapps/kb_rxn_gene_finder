@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Find Genes for Reaction Report</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs4-4.1.1/jq-3.3.1/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/b-html5-1.5.4/b-print-1.5.4/datatables.min.css"/>
+
+</head>
+<body>
+*TABLES*
+
+
+<script type="text/javascript" src="https://cdn.datatables.net/v/bs4-4.1.1/jq-3.3.1/dt-1.10.18/b-1.5.4/b-colvis-1.5.4/b-html5-1.5.4/b-print-1.5.4/datatables.min.js"></script>
+<script>
+    $(document).ready( function () {
+        $('.table').DataTable({
+			'dom': "<'row'<'col-sm-6'B><'col-sm-6'f>>t<'row'<'col-sm-4'i><'col-sm-8'p>>",
+            'buttons': ['copy', 'csv', 'print', 'colvis'],
+            'order': [[11, 'desc']],
+        });
+    } );
+</script>
+
+</body>
+</html>
