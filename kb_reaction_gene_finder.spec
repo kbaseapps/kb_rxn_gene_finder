@@ -9,6 +9,10 @@ This module predict potential gene candidates based on exact reactions or reacti
                     I
 */
 module kb_reaction_gene_finder {
+    /* An X/Y/Z style reference
+        @id ws
+    */
+    typedef string obj_ref;
 
     typedef structure {
         string workspace_name;
@@ -59,6 +63,8 @@ module kb_reaction_gene_finder {
     typedef structure {
 
         list <GeneHits> gene_hits;
+        string report_name;
+        obj_ref report_ref;
 
     } findGenesResults;
 

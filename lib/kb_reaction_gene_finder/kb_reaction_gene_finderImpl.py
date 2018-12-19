@@ -28,7 +28,7 @@ matching uniref sequence mapped from the modelseed set
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_rxn_gene_finder.git"
-    GIT_COMMIT_HASH = "8c2d13cd0cad59f6338fb075b2ed030609796658"
+    GIT_COMMIT_HASH = "b717a736efccfdf895eb42990e2f2fe8253c979a"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -65,7 +65,9 @@ matching uniref sequence mapped from the modelseed set
            "reaction_id" of String, parameter "smarts_id" of String,
            parameter "structural_similarity_score" of Double, parameter
            "difference_similarity_score" of Double, parameter "top_gene_hits"
-           of mapping from String to list of String
+           of mapping from String to list of String, parameter "report_name"
+           of String, parameter "report_ref" of type "obj_ref" (An X/Y/Z
+           style reference @id ws)
         """
         # ctx is the context object
         # return variables are: output
