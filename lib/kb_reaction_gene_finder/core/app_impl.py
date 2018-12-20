@@ -41,14 +41,6 @@ class AppImpl:
                 if seq["seq"]:
                     outfile.write(f'>{seq["key"]}\n{seq["seq"]}\n')
 
-
-    def trim_list( lst ):    
-        new_list = []
-        for r in lst:
-            if len(r) > 0:
-                new_list.append( r )
-        return( new_list )
-
     @staticmethod
     def _find_best_homologs(query_seq_file, target_seq_file, noise_level=50,
                             number_vals_to_report=5, threads=1):
@@ -71,26 +63,24 @@ class AppImpl:
                      f'-query {query_seq_file} > {tmp_blast_output_file}'
         os.system(blastp_cmd)
 
-        top_scores = [0] * number_vals_to_report
-        top_records = [[]] * number_vals_to_report
+        top_scores = []
+        top_records = []
 
         with open(tmp_blast_output_file) as bl:
             for line in bl:
                 cols = blast_record(*line.strip().split())
                 bl_score = float(cols.bitscore)
-                if bl_score > noise_level and bl_score > min(top_scores):
+                if bl_score < noise_level:
+                    continue
+                if len(top_records) < number_vals_to_report:
+                    top_scores.append(bl_score)
+                    top_records.append(cols._asdict())
+                elif bl_score > min(top_scores):
                     min_i = top_scores.index(min(top_scores))
                     top_scores[min_i] = bl_score
                     top_records[min_i] = cols._asdict()
 
-        def trim_list( lst ):    
-            new_list = []
-            for r in lst:
-                if len(r) > 0:
-                    new_list.append( r )
-            return( new_list )
-
-        return trim_list(sorted(top_records, reverse=True, key=lambda r: -1 if len(r) == 0 else float( r['bitscore'] ) ))
+        return sorted(top_records, reverse=True, key=lambda r: float(r['bitscore']))
 
 
     def find_genes_from_similar_reactions(self, params):
