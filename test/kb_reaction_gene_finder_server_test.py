@@ -107,11 +107,33 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
     #    pprint(ret)
     #    self.validateRetStruct( inp, ret )
 
-    def test_run_kb_reaction_gene_finder_2(self):
+    #def test_run_kb_reaction_gene_finder_2(self):
+    #
+    #    inp = {'workspace_name': self.wsName,
+    #           'reaction_set': ['rxn00008'],     # this reaction is not in modelseeds, but similars are
+    #           'structural_similarity_floor': 0.0,
+    #           'difference_similarity_floor': 1.0,
+    #           'query_genome_ref': 'ReferenceDataManager/GCF_000009625.1',
+    #           'number_of_hits_to_report': 5
+    #           }
+    #
+    #    ret = self.serviceImpl.find_genes_from_similar_reactions( self.ctx, inp )
+    #             
+    #    pprint(ret)
+    #    self.validateRetStruct( inp, ret )
+    #    self.validateValues( inp, ret, 
+    #      [[['MAFF_RS23790', 'MAFF_RS23790', '100.000', '361', '0', '0', '1', '361', '1', '361', '0.0', '743'],
+    #        ['MAFF_RS23790', 'DSHI_RS13475', '71.605', '324', '92', '0', '37', '360', '27', '350', '0.0', '508'],
+    #        ['MAFF_RS23790', 'ROS217_RS07690', '69.940', '336', '101', '0', '23', '358', '4', '339', '0.0', '504'],
+    #        ['MAFF_RS23790', 'COC_RS0105080', '72.050', '322', '90', '0', '37', '358', '23', '344', '2.74e-180', '498'],
+    #        ['MAFF_RS23790', 'RSPH17029_RS05395', '71.739', '322', '91', '0', '37', '358', '23', '344', '4.62e-179', '495']]]
+    #       )
+
+    def test_run_kb_reaction_gene_finder_3(self):
     
         inp = {'workspace_name': self.wsName,
-               'reaction_set': ['rxn00008'],     # this reaction is not in modelseeds, but similars are
-               'structural_similarity_floor': 0.0,
+               'reaction_set': ['rxn39253'],     # not found in modelseed, no similars
+               'structural_similarity_floor': 1.0,
                'difference_similarity_floor': 1.0,
                'query_genome_ref': 'ReferenceDataManager/GCF_000009625.1',
                'number_of_hits_to_report': 5
@@ -121,11 +143,6 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
                  
         pprint(ret)
         self.validateRetStruct( inp, ret )
-        self.validateValues( inp, ret, 
-          [[['MAFF_RS23790', 'MAFF_RS23790', '100.000', '361', '0', '0', '1', '361', '1', '361', '0.0', '743'],
-            ['MAFF_RS23790', 'DSHI_RS13475', '71.605', '324', '92', '0', '37', '360', '27', '350', '0.0', '508'],
-            ['MAFF_RS23790', 'ROS217_RS07690', '69.940', '336', '101', '0', '23', '358', '4', '339', '0.0', '504'],
-            ['MAFF_RS23790', 'COC_RS0105080', '72.050', '322', '90', '0', '37', '358', '23', '344', '2.74e-180', '498'],
-            ['MAFF_RS23790', 'RSPH17029_RS05395', '71.739', '322', '91', '0', '37', '358', '23', '344', '4.62e-179', '495']]]
-           )
+        self.validateValues( inp, ret, [[]] )
+
            
