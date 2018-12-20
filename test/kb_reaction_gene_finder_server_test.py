@@ -59,16 +59,73 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
             cls.wsClient.delete_workspace({'workspace': cls.wsName})
             print('Test workspace was deleted')
 
-    # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
-    # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
-    def test_run_kb_reaction_gene_finder_ok(self):
-        # call your implementation
-        ret = self.serviceImpl.find_genes_from_similar_reactions(
-            self.ctx,
-            {'workspace_name': self.wsName,
-             'reaction_set': 'rxn00010',
-             'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
-             'number_of_hits_to_report': 10
-             })
-        pprint(ret)
+    def validateRetStruct( self,  inp, ret ):
+        print( "#length of ret is {0}".format( len(ret) ) )
+        print( "#length of hits: {0}". format( len(ret[0].get("gene_hits",[] ))))
+        print( "#length of reaction set: {0}". format( len(inp.get( 'reaction_set' )) ) )
+        self.assertEqual( len(inp.get( 'reaction_set' )), len(ret[0].get("gene_hits",[]) ) )
+        for subl in ret[0].get( "gene_hits", [] ):
+            print( "#length of subl is {0}".format( len( subl ) ) )
+            self.assertLessEqual( len( subl ), inp.get( 'number_of_hits_to_report', 5 ) )
+        print( "#return structure validated" )
 
+    def validateRow( self, vals, e_vals ):
+        print( "#validate rows {0} vs {1}".format( vals, e_vals ) )
+        print( "compare {0} vs {1}".format( vals.get( 'qseqid'), e_vals[1] ) )
+        self.assertEqual( vals.get( 'qseqid' ), e_vals[1] )
+        print( "compare {0} vs {1}".format( vals.get( 'bitscore'), e_vals[11] ) )
+        r = abs( float( vals.get( 'bitscore' ) ) - float( e_vals[11] ) ) / float( e_vals[11] )
+        self.assertLessEqual( r, 0.02 )  # two percent tolerance
+
+    def validateValues( self, inp, ret, expected_vals ):
+        n = len(ret)
+        #n = len(ret[0].get("gene_hits",[]) )
+        self.assertEqual( len( expected_vals ), n )
+        for i in range(0,n):
+            print( "#checking list {0}:".format( i ) )
+            vals = ret[0].get("gene_hits")[i]
+            e_vals = expected_vals[i]
+            nrows = len( e_vals )
+            print( "#len vals {0} vs e_vals {1}".format( len( vals ), len( e_vals ) ) )
+            self.assertEqual( nrows, len( vals ) )
+            for j in range(0,nrows):
+                print( "#checking row {0}:".format( j ) )
+                self.validateRow( vals[j], e_vals[j] )
+        print( "#values validated" )
+                
+
+    # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
+    # NOTE: According to Python unittest naming rules test method names should start from 'test'. # noqa
+    #def test_run_kb_reaction_gene_finder_ok(self):
+    #    # call your implementation
+    #    inp = {'workspace_name': self.wsName,
+    #           'reaction_set': 'rxn00010',
+    #           'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
+    #           'number_of_hits_to_report': 10
+    #           }
+    #    ret = self.serviceImpl.find_genes_from_similar_reactions( self.ctx, inp )
+    #    pprint(ret)
+    #    self.validateRetStruct( inp, ret )
+
+    def test_run_kb_reaction_gene_finder_2(self):
+    
+        inp = {'workspace_name': self.wsName,
+               'reaction_set': ['rxn00008'],     # this reaction is not in modelseeds, but similars are
+               'structural_similarity_floor': 0.0,
+               'difference_similarity_floor': 1.0,
+               'query_genome_ref': 'ReferenceDataManager/GCF_000009625.1',
+               'number_of_hits_to_report': 5
+               }
+    
+        ret = self.serviceImpl.find_genes_from_similar_reactions( self.ctx, inp )
+                 
+        pprint(ret)
+        self.validateRetStruct( inp, ret )
+        self.validateValues( inp, ret, 
+          [[['MAFF_RS23790', 'MAFF_RS23790', '100.000', '361', '0', '0', '1', '361', '1', '361', '0.0', '743'],
+            ['MAFF_RS23790', 'DSHI_RS13475', '71.605', '324', '92', '0', '37', '360', '27', '350', '0.0', '508'],
+            ['MAFF_RS23790', 'ROS217_RS07690', '69.940', '336', '101', '0', '23', '358', '4', '339', '0.0', '504'],
+            ['MAFF_RS23790', 'COC_RS0105080', '72.050', '322', '90', '0', '37', '358', '23', '344', '2.74e-180', '498'],
+            ['MAFF_RS23790', 'RSPH17029_RS05395', '71.739', '322', '91', '0', '37', '358', '23', '344', '4.62e-179', '495']]]
+           )
+           
