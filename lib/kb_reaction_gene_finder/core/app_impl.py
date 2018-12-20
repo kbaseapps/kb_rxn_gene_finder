@@ -43,7 +43,7 @@ class AppImpl:
 
     @staticmethod
     def _find_best_homologs(query_seq_file, target_seq_file, noise_level=50,
-                            number_vals_to_report=5, threads=4):
+                            number_vals_to_report=5, threads=1):
         """Blast the query_seq_file against the target_seq_file and return the best hits"""
         logging.info("running blastp for {0} vs {1}".format(query_seq_file, target_seq_file))
         blast_record = namedtuple('blast_record', ['qseqid', 'sseqid', 'pident', 'length',
@@ -114,7 +114,8 @@ class AppImpl:
         return self._find_best_homologs(search_fasta,
                                         genome_feature_path,
                                         params.get('blast_score_floor', 50),
-                                        params.get('number_vals_to_report', 5))
+                                        params.get('number_of_hits_to_report', 5))
+                                        #params.get('number_vals_to_report', 5))
 
     def _build_report(self, reactions, gene_hits, workspace_name):
         """
