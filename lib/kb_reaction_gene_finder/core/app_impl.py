@@ -41,6 +41,14 @@ class AppImpl:
                 if seq["seq"]:
                     outfile.write(f'>{seq["key"]}\n{seq["seq"]}\n')
 
+
+    def trim_list( lst ):    
+        new_list = []
+        for r in lst:
+            if len(r) > 0:
+                new_list.append( r )
+        return( new_list )
+
     @staticmethod
     def _find_best_homologs(query_seq_file, target_seq_file, noise_level=50,
                             number_vals_to_report=5, threads=1):
@@ -75,7 +83,15 @@ class AppImpl:
                     top_scores[min_i] = bl_score
                     top_records[min_i] = cols._asdict()
 
-        return sorted(top_records, reverse=True, key=lambda r: r['bitscore'])
+        def trim_list( lst ):    
+            new_list = []
+            for r in lst:
+                if len(r) > 0:
+                    new_list.append( r )
+            return( new_list )
+
+        return trim_list(sorted(top_records, reverse=True, key=lambda r: -1 if len(r) == 0 else float( r['bitscore'] ) ))
+
 
     def find_genes_from_similar_reactions(self, params):
         self._validate_params(params, {'workspace_name', 'reaction_set', 'query_genome_ref', },
