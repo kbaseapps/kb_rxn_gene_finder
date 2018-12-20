@@ -43,7 +43,7 @@ class AppImpl:
 
     @staticmethod
     def _find_best_homologs(query_seq_file, target_seq_file, noise_level=50,
-                            number_vals_to_report=5, threads=4):
+                            number_vals_to_report=5, threads=1):
         """Blast the query_seq_file against the target_seq_file and return the best hits"""
         logging.info("running blastp for {0} vs {1}".format(query_seq_file, target_seq_file))
         blast_record = namedtuple('blast_record', ['qseqid', 'sseqid', 'pident', 'length',
@@ -63,19 +63,25 @@ class AppImpl:
                      f'-query {query_seq_file} > {tmp_blast_output_file}'
         os.system(blastp_cmd)
 
-        top_scores = [0] * number_vals_to_report
-        top_records = [[]] * number_vals_to_report
+        top_scores = []
+        top_records = []
 
         with open(tmp_blast_output_file) as bl:
             for line in bl:
                 cols = blast_record(*line.strip().split())
                 bl_score = float(cols.bitscore)
-                if bl_score > noise_level and bl_score > min(top_scores):
+                if bl_score < noise_level:
+                    continue
+                if len(top_records) < number_vals_to_report:
+                    top_scores.append(bl_score)
+                    top_records.append(cols._asdict())
+                elif bl_score > min(top_scores):
                     min_i = top_scores.index(min(top_scores))
                     top_scores[min_i] = bl_score
                     top_records[min_i] = cols._asdict()
 
-        return sorted(top_records, reverse=True, key=lambda r: r['bitscore'])
+        return sorted(top_records, reverse=True, key=lambda r: float(r['bitscore']))
+
 
     def find_genes_from_similar_reactions(self, params):
         self._validate_params(params, {'workspace_name', 'reaction_set', 'query_genome_ref', },
@@ -114,7 +120,8 @@ class AppImpl:
         return self._find_best_homologs(search_fasta,
                                         genome_feature_path,
                                         params.get('blast_score_floor', 50),
-                                        params.get('number_vals_to_report', 5))
+                                        params.get('number_of_hits_to_report', 5))
+                                        #params.get('number_vals_to_report', 5))
 
     def _build_report(self, reactions, gene_hits, workspace_name):
         """
