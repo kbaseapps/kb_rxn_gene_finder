@@ -1,7 +1,7 @@
 import logging
 import os
 import uuid
-from collections import namedtuple
+from collections import OrderedDict
 
 from kb_reaction_gene_finder.core.re_api import RE_API
 from installed_clients.GenomeFileUtilClient import GenomeFileUtil
@@ -46,9 +46,9 @@ class AppImpl:
                             number_vals_to_report=5, threads=1):
         """Blast the query_seq_file against the target_seq_file and return the best hits"""
         logging.info("running blastp for {0} vs {1}".format(query_seq_file, target_seq_file))
-        blast_record = namedtuple('blast_record', ['qseqid', 'sseqid', 'pident', 'length',
-                                                   'mismatch', 'gapopen', 'qstart', 'qend',
-                                                   'sstart', 'send', 'evalue', 'bitscore'])
+        out_cols = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'evalue', 'bitscore']
+        col_names = ['Database Gene', 'Genome Gene', 'Percent Identity', 'Match Length',
+                     'Mismatches', 'E Value', 'Bit Score']
         # wasn't able to get a pipe going
         # proc = subprocess.run( 'blastp -outfmt 6 -subject ' + target_seq_file +' -query ' + query_seq_file,
         #                       stdout=subprocess.PIPE, shell=True, universal_newline=True )
@@ -59,8 +59,8 @@ class AppImpl:
         # so using file output instead
         tmp_blast_output_file = os.path.join("blastp.results" + str(uuid.uuid4()))
 
-        blastp_cmd = f'blastp -outfmt 6 -subject {target_seq_file} -num_threads {threads} ' \
-                     f'-query {query_seq_file} > {tmp_blast_output_file}'
+        blastp_cmd = f'blastp -outfmt "6 {" ".join(out_cols)}" -subject {target_seq_file} '\
+                     f'-num_threads {threads} -query {query_seq_file} > {tmp_blast_output_file}'
         os.system(blastp_cmd)
 
         top_scores = []
@@ -68,19 +68,19 @@ class AppImpl:
 
         with open(tmp_blast_output_file) as bl:
             for line in bl:
-                cols = blast_record(*line.strip().split())
-                bl_score = float(cols.bitscore)
+                cols = OrderedDict(zip(col_names, line.strip().split()))
+                bl_score = float(cols['Bit Score'])
                 if bl_score < noise_level:
                     continue
                 if len(top_records) < number_vals_to_report:
                     top_scores.append(bl_score)
-                    top_records.append(cols._asdict())
+                    top_records.append(cols)
                 elif bl_score > min(top_scores):
                     min_i = top_scores.index(min(top_scores))
                     top_scores[min_i] = bl_score
-                    top_records[min_i] = cols._asdict()
+                    top_records[min_i] = cols
 
-        return sorted(top_records, reverse=True, key=lambda r: float(r['bitscore']))
+        return sorted(top_records, reverse=True, key=lambda r: float(r['Bit Score']))
 
 
     def find_genes_from_similar_reactions(self, params):
