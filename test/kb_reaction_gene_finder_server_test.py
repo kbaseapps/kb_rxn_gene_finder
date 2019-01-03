@@ -66,8 +66,8 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
         print( "#return structure validated" )
 
     def validateRow( self, vals, e_vals ):
-        self.assertEqual( vals.get( 'qseqid' ), e_vals[1] )
-        r = abs( float( vals.get( 'bitscore' ) ) - float( e_vals[11] ) ) / float( e_vals[11] )
+        self.assertEqual( vals.get( 'Database Gene' ), e_vals[1] )
+        r = abs( float( vals.get( 'Bit Score' ) ) - float( e_vals[-1] ) ) / float( e_vals[-1] )
         self.assertLessEqual( r, 0.04 )  # four percent tolerance
 
     def validateValues( self, inp, ret, expected_vals ):
@@ -80,7 +80,6 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
             self.assertEqual( nrows, len( vals ) )
             for j in range(0,nrows):
                 self.validateRow( vals[j], e_vals[j] )
-        print( "#values validated" )
 
     def test_find_genes_from_similar_reactions_string(self):
        inp = {'workspace_name': self.wsName,
@@ -104,11 +103,11 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
        ret = self.serviceImpl.find_genes_from_similar_reactions( self.ctx, inp )
        self.validateRetStruct( inp, ret )
        self.validateValues( inp, ret, 
-         [[['MAFF_RS23790', 'MAFF_RS23790', '100.000', '361', '0', '0', '1', '361', '1', '361', '0.0', '743'],
-           ['MAFF_RS23790', 'DSHI_RS13475', '71.605', '324', '92', '0', '37', '360', '27', '350', '0.0', '508'],
-           ['MAFF_RS23790', 'ROS217_RS07690', '69.940', '336', '101', '0', '23', '358', '4', '339', '0.0', '504'],
-           ['MAFF_RS23790', 'COC_RS0105080', '72.050', '322', '90', '0', '37', '358', '23', '344', '2.74e-180', '498'],
-           ['MAFF_RS23790', 'RSPH17029_RS05395', '71.739', '322', '91', '0', '37', '358', '23', '344', '4.62e-179', '495']]]
+         [[['MAFF_RS23790', 'MAFF_RS23790', '100.000', '361', '0', '0.0', '743'],
+           ['MAFF_RS23790', 'DSHI_RS13475', '71.605', '324', '92', '0.0', '508'],
+           ['MAFF_RS23790', 'ROS217_RS07690', '69.940', '336', '101', '0.0', '504'],
+           ['MAFF_RS23790', 'COC_RS0105080', '72.050', '322', '90', '2.74e-180', '498'],
+           ['MAFF_RS23790', 'RSPH17029_RS05395', '71.739', '322', '91', '4.62e-179', '495']]]
           )
 
     def test_find_genes_from_similar_reactions_3(self):
@@ -142,16 +141,10 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
        pprint(ret)
        self.validateRetStruct( inp, ret )
        self.validateValues( inp, ret,
-           [[['JL2886_RS04030', 'SL003B_RS05585', '59.531', '341', '137', '1', '13', '353', '13', '352', '5.98e-138', '387'],
-             ['JL2886_RS04030', 'RL_RS33440', '60.882', '340', '132', '1', '14', '353', '14', '352', '1.38e-136', '384'],
-             ['JL2886_RS04030', 'SADFL11_RS12560', '57.507', '353', '149', '1', '1', '353', '1', '352', '9.89e-136', '382'],
-             #['JL2886_RS04030', 'H009_RS06465', '59.118', '340', '138', '1', '13', '352', '12', '350', '4.20e-130', '367'],
-             #['JL2886_RS04030', 'VEIS_RS22320', '55.000', '340', '153', '0', '13', '352', '12', '351', '4.42e-122', '347'],
-             #['JL2886_RS04030', 'YUQ_RS0102485', '53.529', '340', '158', '0', '13', '352', '13', '352', '1.17e-118', '339'],
-             #['JL2886_RS04030', 'REUT_RS08005', '50.872', '344', '164', '2', '13', '352', '12', '354', '1.04e-116', '333'],
-             ['JL2886_RS04030', 'P350_RS12650', '53.529', '340', '158', '0', '13', '352', '11', '350', '4.22e-116', '332']
-             #['JL2886_RS04030', 'REUT_RS23880', '49.709', '344', '173', '0', '9', '352', '8', '351', '1.71e-109', '315'],
-             #['JL2886_RS04030', 'PLU_RS00725', '46.784', '342', '180', '1', '13', '352', '12', '353', '2.50e-109', '315']
+           [[['JL2886_RS04030', 'SL003B_RS05585', '59.531', '341', '137', '5.98e-138', '387'],
+             ['JL2886_RS04030', 'RL_RS33440', '60.882', '340', '132', '1.38e-136', '384'],
+             ['JL2886_RS04030', 'SADFL11_RS12560', '57.507', '353', '9.89e-136', '382'],
+             ['JL2886_RS04030', 'P350_RS12650', '53.529', '340', '158', '4.22e-116', '332']
             ]] )
 
     def test_find_genes_from_similar_reactions_5(self):
@@ -168,9 +161,9 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
         self.validateRetStruct( inp, ret )
         self.validateValues( inp, ret,
             [[
-             ['SWIT_RS04250','SWIT_RS04250','100.000','793','0','0','1','793','1','793','0.0','1577'],
-             ['SWIT_RS02535','SWIT_RS04250','50.066','753','357','6','15','753','23','770','0.0','630'],
-             ['SWIT_RS23205','SWIT_RS04250','','','','','','','','','','154'],  # wasn't in offline run
+             ['SWIT_RS04250','SWIT_RS04250','100.000','793','0', '0.0','1577'],
+             ['SWIT_RS02535','SWIT_RS04250','50.066','753','357', '0.0','630'],
+             ['SWIT_RS23205','SWIT_RS04250','','','', '','154'],  # wasn't in offline run
 
              #['SWIT_RS23205','SWIT_RS04250','44.211','95','50','3','358','449','161','255','3.53e-12','56.2'],
              #['SWIT_RS25760', 'SWIT_RS04250','35.211', '142','88','3','608','747','646','785','3.33e-21','85.5'],
