@@ -14,7 +14,7 @@
             "id": "reaction_set",
             "optional": false,
             "advanced": false,
-            "allow_multiple": false,
+            "allow_multiple": true,
             "default_values": [],
             "field_type": "dynamic_dropdown",
             "dynamic_dropdown_options": {
@@ -92,6 +92,14 @@
                 "min_integer" : 0,
                 "max_integer" : 50
             }
+        },
+        {
+            "id": "bulk_reaction_ids",
+            "optional": true,
+            "advanced": true,
+            "allow_multiple": false,
+            "default_values": [ "" ],
+            "field_type": "text"
         }
     ],
     "behavior": {
@@ -125,6 +133,9 @@
                 },{
                     "input_parameter": "number_of_hits_to_report",
                     "target_property": "number_of_hits_to_report"
+                },{
+                    "input_parameter": "bulk_reaction_ids",
+                    "target_property": "bulk_reaction_ids"
                 }
             ],
             "output_mapping": [

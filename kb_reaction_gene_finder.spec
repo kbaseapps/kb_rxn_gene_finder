@@ -16,8 +16,8 @@ module kb_reaction_gene_finder {
 
     typedef structure {
         string workspace_name;
+        string bulk_reaction_ids;
         list <string> reaction_set;
-    	list <string> smarts_set;
         string query_genome_ref;
         float structural_similarity_floor;
         float difference_similarity_floor;

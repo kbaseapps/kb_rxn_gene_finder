@@ -28,7 +28,7 @@ matching uniref sequence mapped from the modelseed set
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_rxn_gene_finder.git"
-    GIT_COMMIT_HASH = "b717a736efccfdf895eb42990e2f2fe8253c979a"
+    GIT_COMMIT_HASH = "a90c2a765815ea718f29d1d57342ddd482a82e99"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -53,9 +53,9 @@ matching uniref sequence mapped from the modelseed set
     def find_genes_from_similar_reactions(self, ctx, params):
         """
         :param params: instance of type "findGenesParams" -> structure:
-           parameter "workspace_name" of String, parameter "reaction_set" of
-           list of String, parameter "smarts_set" of list of String,
-           parameter "query_genome_ref" of String, parameter
+           parameter "workspace_name" of String, parameter
+           "bulk_reaction_ids" of String, parameter "reaction_set" of list of
+           String, parameter "query_genome_ref" of String, parameter
            "structural_similarity_floor" of Double, parameter
            "difference_similarity_floor" of Double, parameter
            "blast_score_floor" of Double, parameter
