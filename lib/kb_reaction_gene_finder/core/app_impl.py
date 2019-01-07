@@ -82,20 +82,22 @@ class AppImpl:
 
         return sorted(top_records, reverse=True, key=lambda r: float(r['Bit Score']))
 
-
     def find_genes_from_similar_reactions(self, params):
-        self._validate_params(params, {'workspace_name', 'reaction_set', 'query_genome_ref', },
+        self._validate_params(params, {'workspace_name', 'query_genome_ref', },
                               {'number_of_hits_to_report', 'smarts_set', 'blast_score_floor',
-                               'structural_similarity_floor', 'difference_similarity_floor'})
+                               'structural_similarity_floor', 'difference_similarity_floor',
+                               'reaction_set', 'bulk_reaction_ids'})
 
         feature_seq_path = self.gfu.genome_proteins_to_fasta(
             {'genome_ref': params['query_genome_ref'],
              'include_functions': True,
              'include_aliases': False})['file_path']
 
-        # TODO: fix UI so I don't have to use this hack
-        if isinstance(params['reaction_set'], str):
-            params['reaction_set'] = [params['reaction_set']]
+        if not params.get('reaction_set'):
+            params['reaction_set'] = []
+
+        if params.get('bulk_reaction_ids'):
+            params['reaction_set'] += params['bulk_reaction_ids'].split('\n')
 
         output = {'gene_hits': [self.find_genes_for_rxn(rxn, feature_seq_path, params)
                                 for rxn in params['reaction_set']]}

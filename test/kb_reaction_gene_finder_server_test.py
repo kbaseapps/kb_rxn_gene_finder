@@ -81,9 +81,17 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
             for j in range(0,nrows):
                 self.validateRow( vals[j], e_vals[j] )
 
+    def test_find_genes_from_similar_reactions_no_rxn(self):
+       inp = {'workspace_name': self.wsName,
+              'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
+              'number_of_hits_to_report': 10
+              }
+       ret = self.serviceImpl.find_genes_from_similar_reactions( self.ctx, inp )
+       self.validateRetStruct( inp, ret )
+
     def test_find_genes_from_similar_reactions_string(self):
        inp = {'workspace_name': self.wsName,
-              'reaction_set': 'rxn00010',
+              'bulk_reaction_ids': 'rxn00010\nrxn00008',
               'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
               'number_of_hits_to_report': 10
               }

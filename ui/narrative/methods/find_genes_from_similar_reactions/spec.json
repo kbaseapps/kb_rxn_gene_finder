@@ -12,7 +12,7 @@
     "parameters": [
         {
             "id": "reaction_set",
-            "optional": false,
+            "optional": true,
             "advanced": false,
             "allow_multiple": true,
             "default_values": [],
