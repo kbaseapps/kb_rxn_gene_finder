@@ -1,7 +1,7 @@
 import logging
 import os
 import uuid
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 
 from kb_reaction_gene_finder.core.re_api import RE_API
 from installed_clients.GenomeFileUtilClient import GenomeFileUtil
@@ -41,14 +41,13 @@ class AppImpl:
                 if seq["seq"]:
                     outfile.write(f'>{seq["key"]}\n{seq["seq"]}\n')
 
-    @staticmethod
-    def _find_best_homologs(query_seq_file, target_seq_file, noise_level=50,
+    def _find_best_homologs(self, query_seq_file, target_seq_file, rxn_id, noise_level=50,
                             number_vals_to_report=5, threads=1):
         """Blast the query_seq_file against the target_seq_file and return the best hits"""
         logging.info("running blastp for {0} vs {1}".format(query_seq_file, target_seq_file))
-        out_cols = ['qseqid', 'sseqid', 'pident', 'length', 'mismatch', 'evalue', 'bitscore']
-        col_names = ['Database Gene', 'Genome Gene', 'Percent Identity', 'Match Length',
-                     'Mismatches', 'E Value', 'Bit Score']
+        out_cols = ['sseqid', 'qseqid', 'bitscore', 'pident', 'length', 'mismatch', 'evalue',]
+        col_names = ['Genome Gene', 'Closest Database Gene', 'Bit Score', 'Percent Identity',
+                     'Match Length', 'Mismatches', 'E Value']
         # wasn't able to get a pipe going
         # proc = subprocess.run( 'blastp -outfmt 6 -subject ' + target_seq_file +' -query ' + query_seq_file,
         #                       stdout=subprocess.PIPE, shell=True, universal_newline=True )
@@ -57,14 +56,15 @@ class AppImpl:
         #    print( line )
 
         # so using file output instead
-        tmp_blast_output_file = os.path.join("blastp.results" + str(uuid.uuid4()))
+        tmp_blast_output_file = os.path.join(self.scratch, "blastp.results" + str(uuid.uuid4()))
 
         blastp_cmd = f'blastp -outfmt "6 {" ".join(out_cols)}" -subject {target_seq_file} '\
                      f'-num_threads {threads} -query {query_seq_file} > {tmp_blast_output_file}'
         os.system(blastp_cmd)
 
-        top_scores = []
-        top_records = []
+        gene_hits = dict()
+        top_bitscore = Counter()
+        gene_hit_count = Counter()
 
         with open(tmp_blast_output_file) as bl:
             for line in bl:
@@ -72,15 +72,19 @@ class AppImpl:
                 bl_score = float(cols['Bit Score'])
                 if bl_score < noise_level:
                     continue
-                if len(top_records) < number_vals_to_report:
-                    top_scores.append(bl_score)
-                    top_records.append(cols)
-                elif bl_score > min(top_scores):
-                    min_i = top_scores.index(min(top_scores))
-                    top_scores[min_i] = bl_score
-                    top_records[min_i] = cols
 
-        return sorted(top_records, reverse=True, key=lambda r: float(r['Bit Score']))
+                gene_hit_count[cols['Genome Gene']] += 1
+                if cols['Genome Gene'] not in gene_hits or \
+                        top_bitscore[cols['Genome Gene']] < bl_score:
+                    gene_hits[cols['Genome Gene']] = cols
+                    top_bitscore[cols['Genome Gene']] = float(cols['Bit Score'])
+
+        top_genes = (gene[0] for gene in top_bitscore.most_common(number_vals_to_report))
+        top_records = [{"Reaction ID": rxn_id, **gene_hits[gene],
+                        "Total Gene Hits": str(gene_hit_count[gene])}
+                       for gene in top_genes]
+
+        return top_records
 
     def find_genes_from_similar_reactions(self, params):
         self._validate_params(params, {'workspace_name', 'query_genome_ref', },
@@ -99,8 +103,9 @@ class AppImpl:
         if params.get('bulk_reaction_ids'):
             params['reaction_set'] += params['bulk_reaction_ids'].split('\n')
 
-        output = {'gene_hits': [self.find_genes_for_rxn(rxn, feature_seq_path, params)
-                                for rxn in params['reaction_set']]}
+        output = {'gene_hits': []}
+        for rxn in params['reaction_set']:
+            output['gene_hits'].extend(self.find_genes_for_rxn(rxn, feature_seq_path, params))
         output.update(self._build_report(params['reaction_set'],
                                          output['gene_hits'],
                                          params['workspace_name'],
@@ -121,9 +126,9 @@ class AppImpl:
 
         return self._find_best_homologs(search_fasta,
                                         genome_feature_path,
+                                        reaction,
                                         params.get('blast_score_floor', 50),
                                         params.get('number_of_hits_to_report', 5))
-                                        #params.get('number_vals_to_report', 5))
 
     def _build_report(self, reactions, gene_hits, workspace_name):
         """
@@ -157,27 +162,26 @@ class AppImpl:
         result_file_path = os.path.join(output_directory, 'find_genes_for_rxn.html')
 
         # Build HTML tables for results
-        tables = []
-        for rxn, hits in zip(reactions, gene_hits):
-            tables.append(f'<h3 style="text-align: center">{rxn}</h3>')
-            if not hits:
-                tables.append("<h5>No hits found!</h5>")
-                continue
-            tables.append('<table class="table table-bordered table-striped">')
-            header = "</td><td>".join(hits[0].keys())
-            tables.append(f'\t<thead><tr><td>{header}</td></tr></thead>')
-            tables.append('\t<tbody>')
-            for row in hits:
+        table_lines = []
+        table_lines.append(f'<h3 style="text-align: center">Best matching Genes</h3>')
+        if not gene_hits:
+            table_lines.append("<h5>No hits found!</h5>")
+        else:
+            table_lines.append('<table class="table table-bordered table-striped">')
+            header = "</td><td>".join(gene_hits[0].keys())
+            table_lines.append(f'\t<thead><tr><td>{header}</td></tr></thead>')
+            table_lines.append('\t<tbody>')
+            for row in gene_hits:
                 line = "</td><td>".join(row.values())
-                tables.append(f'\t\t<tr><td>{line}</td></tr>')
-            tables.append('\t</tbody>')
-            tables.append('</table>\n')
+                table_lines.append(f'\t\t<tr><td>{line}</td></tr>')
+            table_lines.append('\t</tbody>')
+            table_lines.append('</table>\n')
 
         # Fill in template HTML
         with open(os.path.join(os.path.dirname(__file__), 'find_genes_for_rxn_template.html')
                   ) as report_template_file:
             report_template = report_template_file.read() \
-                .replace('*TABLES*', "\n".join(tables))
+                .replace('*TABLES*', "\n".join(table_lines))
 
         with open(result_file_path, 'w') as result_file:
             result_file.write(report_template)

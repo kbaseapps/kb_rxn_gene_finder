@@ -4,13 +4,6 @@ from pprint import pformat
 
 import requests
 
-#
-#  This is fapi - the fake api which is an attempt to isolate the layer of calls that
-#  are anticipated to handled by the graphDB.   If this works, it should be possible to
-#  rewrite these functions/procedures to use Arango and run the main app basis program
-#  without alteration
-#
-
 
 class RE_API:
     def __init__(self, re_url, token):
