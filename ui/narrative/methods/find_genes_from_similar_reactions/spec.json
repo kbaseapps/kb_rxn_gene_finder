@@ -40,6 +40,13 @@
             "text_options": {
                 "valid_ws_types": [ "KBaseGenomeAnnotations.Genome", "KBaseGenomes.Genome" ]
             }
+        },{
+            "id": "feature_set_prefix",
+            "optional": false,
+            "advanced": false,
+            "allow_multiple": false,
+            "default_values": [ "" ],
+            "field_type": "text"
         },
         {
             "id": "structural_similarity_floor",
@@ -130,6 +137,9 @@
                     "input_parameter": "query_genome_ref",
                     "target_property": "query_genome_ref",
                     "target_type_transform": "resolved-ref"
+                },{
+                    "input_parameter": "feature_set_prefix",
+                    "target_property": "feature_set_prefix"
                 },{
                     "input_parameter": "number_of_hits_to_report",
                     "target_property": "number_of_hits_to_report"

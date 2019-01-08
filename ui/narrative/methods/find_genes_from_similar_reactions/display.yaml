@@ -37,6 +37,11 @@ parameters :
             Target Genome
         short-hint : |
             The Target Genome to find matches
+    feature_set_prefix:
+        ui-name : |
+            Gene Candidate Feature Set
+        short-hint : |
+            A prefix for the feature sets containing the gene candidates
     structural_similarity_floor :
         ui-name : |
             Structural Similarity Floor

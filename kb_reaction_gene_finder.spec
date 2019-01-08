@@ -23,6 +23,7 @@ module kb_reaction_gene_finder {
         float difference_similarity_floor;
         float blast_score_floor;
         int number_of_hits_to_report;
+        string feature_set_prefix;
     } findGenesParams;
 
 	/*
