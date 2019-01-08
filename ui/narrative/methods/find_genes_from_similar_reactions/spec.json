@@ -1,10 +1,11 @@
 {
     "ver": "0.0.1",
     "authors": [
-        "janakakbase"
+        "janakakbase",
+        "jjeffryes"
     ],
     "contact": "https://kbase.us/contact-us/",
-    "categories": ["active"],
+    "categories": ["active", "annotation"],
     "widgets": {
         "input": null,
         "output": "no-display"
@@ -46,7 +47,11 @@
             "advanced": false,
             "allow_multiple": false,
             "default_values": [ "" ],
-            "field_type": "text"
+            "field_type": "text",
+            "text_options" : {
+                "is_output_name" : true,
+                "valid_ws_types": [ "KBaseCollections.FeatureSet"]
+            }
         },
         {
             "id": "structural_similarity_floor",
@@ -106,7 +111,7 @@
             "advanced": true,
             "allow_multiple": false,
             "default_values": [ "" ],
-            "field_type": "text"
+            "field_type": "textarea"
         }
     ],
     "behavior": {
