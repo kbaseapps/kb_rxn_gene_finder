@@ -4,6 +4,7 @@ import uuid
 from collections import OrderedDict, Counter
 
 from kb_reaction_gene_finder.core.re_api import RE_API
+from installed_clients.FeatureSetUtilsClient import FeatureSetUtils
 from installed_clients.GenomeFileUtilClient import GenomeFileUtil
 from installed_clients.KBaseReportClient import KBaseReport
 
@@ -13,6 +14,7 @@ class AppImpl:
         self.callback_url = os.environ['SDK_CALLBACK_URL']
         self.scratch = config['scratch']
         self.re_api = RE_API(config['re-api'], ctx['token'])
+        self.fsu = FeatureSetUtils(self.callback_url)
         self.gfu = GenomeFileUtil(self.callback_url)
         self.kbr = KBaseReport(self.callback_url)
 
@@ -41,21 +43,24 @@ class AppImpl:
                 if seq["seq"]:
                     outfile.write(f'>{seq["key"]}\n{seq["seq"]}\n')
 
-    def _find_best_homologs(self, query_seq_file, target_seq_file, rxn_id, noise_level=50,
-                            number_vals_to_report=5, threads=1):
+    def _make_feature_set(self, workspace, genome, fs_name_prefix, reaction_id, top_genes):
+        params = {'genome': genome,
+                  'feature_ids': top_genes,
+                  'workspace_name': workspace,
+                  'description': f'A set of the top gene candidates for {reaction_id} calculated '
+                                 f'by the "Find Candidate Genes for a Reaction" app',
+                  'output_feature_set': f'{fs_name_prefix}_{reaction_id}',
+                 }
+        return self.fsu.build_feature_set(params)['feature_set_ref']
+
+    def _find_best_homologs(self, query_seq_file, target_seq_file, rxn_id, genome_ref,
+                            noise_level=50, number_vals_to_report=5, threads=1):
         """Blast the query_seq_file against the target_seq_file and return the best hits"""
         logging.info("running blastp for {0} vs {1}".format(query_seq_file, target_seq_file))
         out_cols = ['sseqid', 'qseqid', 'bitscore', 'pident', 'length', 'mismatch', 'evalue',]
         col_names = ['Genome Gene', 'Closest Database Gene', 'Bit Score', 'Percent Identity',
                      'Match Length', 'Mismatches', 'E Value']
-        # wasn't able to get a pipe going
-        # proc = subprocess.run( 'blastp -outfmt 6 -subject ' + target_seq_file +' -query ' + query_seq_file,
-        #                       stdout=subprocess.PIPE, shell=True, universal_newline=True )
-        #
-        # for line in proc.stdout:
-        #    print( line )
 
-        # so using file output instead
         tmp_blast_output_file = os.path.join(self.scratch, "blastp.results" + str(uuid.uuid4()))
 
         blastp_cmd = f'blastp -outfmt "6 {" ".join(out_cols)}" -subject {target_seq_file} '\
@@ -79,12 +84,12 @@ class AppImpl:
                     gene_hits[cols['Genome Gene']] = cols
                     top_bitscore[cols['Genome Gene']] = float(cols['Bit Score'])
 
-        top_genes = (gene[0] for gene in top_bitscore.most_common(number_vals_to_report))
+        top_genes = [gene[0] for gene in top_bitscore.most_common(number_vals_to_report)]
         top_records = [{"Reaction ID": rxn_id, **gene_hits[gene],
                         "Total Gene Hits": str(gene_hit_count[gene])}
                        for gene in top_genes]
 
-        return top_records
+        return top_records, top_genes
 
     def find_genes_from_similar_reactions(self, params):
         self._validate_params(params, {'workspace_name', 'query_genome_ref', },
@@ -103,11 +108,19 @@ class AppImpl:
         if params.get('bulk_reaction_ids'):
             params['reaction_set'] += params['bulk_reaction_ids'].split('\n')
 
-        output = {'gene_hits': []}
+        output = {'gene_hits': [], 'feature_set_refs': []}
         for rxn in params['reaction_set']:
-            output['gene_hits'].extend(self.find_genes_for_rxn(rxn, feature_seq_path, params))
+            hits, genes = self.find_genes_for_rxn(rxn, feature_seq_path, params)
+            output['feature_set_refs'].append(
+                self._make_feature_set(params['workspace_name'],
+                                       params['query_genome_ref'],
+                                       params.get('feature_set_prefix', 'gene_candidates'),
+                                       rxn,
+                                       genes))
+            output['gene_hits'].extend(hits)
         output.update(self._build_report(params['reaction_set'],
                                          output['gene_hits'],
+                                         output['feature_set_refs'],
                                          params['workspace_name'],
                                          ))
         return output
@@ -127,10 +140,11 @@ class AppImpl:
         return self._find_best_homologs(search_fasta,
                                         genome_feature_path,
                                         reaction,
+                                        params['query_genome_ref'],
                                         params.get('blast_score_floor', 50),
                                         params.get('number_of_hits_to_report', 5))
 
-    def _build_report(self, reactions, gene_hits, workspace_name):
+    def _build_report(self, reactions, gene_hits, feature_sets, workspace_name):
         """
                 _generate_report: generate summary report for upload
                 """
@@ -139,8 +153,8 @@ class AppImpl:
         report_params = {
             'html_links': output_html_files,
             'direct_html_link_index': 0,
-            #'objects_created': [{'ref': pdb_obj_ref,
-            #                     'description': 'Imported PDB'}],
+            'objects_created': [{'ref': fs_ref, 'description': 'A set of the top gene candidates'}
+                                for fs_ref in feature_sets],
             'workspace_name': workspace_name,
             'report_object_name': 'find_genes_for_rxn_' + str(uuid.uuid4())}
 

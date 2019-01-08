@@ -95,8 +95,7 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
               'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
               'number_of_hits_to_report': 10
               }
-       ret = self.serviceImpl.find_genes_from_similar_reactions( self.ctx, inp )
-       self.validateRetStruct( inp, ret )"""
+       ret = self.serviceImpl.find_genes_from_similar_reactions( self.ctx, inp )"""
 
     def test_find_genes_from_similar_reactions_2(self):
 

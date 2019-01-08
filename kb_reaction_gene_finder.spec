@@ -63,6 +63,7 @@ module kb_reaction_gene_finder {
     typedef structure {
 
         list <GeneHits> gene_hits;
+        list<obj_ref> feature_set_refs;
         string report_name;
         obj_ref report_ref;
 
