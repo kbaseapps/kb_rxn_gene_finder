@@ -37,6 +37,11 @@ parameters :
             Target Genome
         short-hint : |
             The Target Genome to find matches
+    feature_set_prefix:
+        ui-name : |
+            Gene Candidate Feature Set
+        short-hint : |
+            A prefix for the feature sets containing the gene candidates
     structural_similarity_floor :
         ui-name : |
             Structural Similarity Floor
@@ -57,6 +62,12 @@ parameters :
             Gene hits per reaction
         short-hint : |
             The number of hits to report for each reaction
+    bulk_reaction_ids:
+        ui-name : |
+            Bulk Reaction IDs
+        short-hint : |
+            Supply a set of reaction IDs to search, one id per line.
+
 description : |
     <p>This method searches for genes that may perform a reaction based on BLAST of known genes
     performing similar reactions against a supplied genome</p>

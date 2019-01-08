@@ -16,13 +16,14 @@ module kb_reaction_gene_finder {
 
     typedef structure {
         string workspace_name;
+        string bulk_reaction_ids;
         list <string> reaction_set;
-    	list <string> smarts_set;
         string query_genome_ref;
         float structural_similarity_floor;
         float difference_similarity_floor;
         float blast_score_floor;
         int number_of_hits_to_report;
+        string feature_set_prefix;
     } findGenesParams;
 
 	/*
@@ -63,6 +64,7 @@ module kb_reaction_gene_finder {
     typedef structure {
 
         list <GeneHits> gene_hits;
+        list<obj_ref> feature_set_refs;
         string report_name;
         obj_ref report_ref;
 

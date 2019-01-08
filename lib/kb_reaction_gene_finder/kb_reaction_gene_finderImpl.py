@@ -28,7 +28,7 @@ matching uniref sequence mapped from the modelseed set
     ######################################### noqa
     VERSION = "0.0.1"
     GIT_URL = "https://github.com/kbaseapps/kb_rxn_gene_finder.git"
-    GIT_COMMIT_HASH = "b717a736efccfdf895eb42990e2f2fe8253c979a"
+    GIT_COMMIT_HASH = "e772f9d3b85217eee54b1b26307bdb4229ca7636"
 
     #BEGIN_CLASS_HEADER
     # Class variables and functions can be defined in this block
@@ -53,21 +53,23 @@ matching uniref sequence mapped from the modelseed set
     def find_genes_from_similar_reactions(self, ctx, params):
         """
         :param params: instance of type "findGenesParams" -> structure:
-           parameter "workspace_name" of String, parameter "reaction_set" of
-           list of String, parameter "smarts_set" of list of String,
-           parameter "query_genome_ref" of String, parameter
+           parameter "workspace_name" of String, parameter
+           "bulk_reaction_ids" of String, parameter "reaction_set" of list of
+           String, parameter "query_genome_ref" of String, parameter
            "structural_similarity_floor" of Double, parameter
            "difference_similarity_floor" of Double, parameter
            "blast_score_floor" of Double, parameter
-           "number_of_hits_to_report" of Long
+           "number_of_hits_to_report" of Long, parameter "feature_set_prefix"
+           of String
         :returns: instance of type "findGenesResults" -> structure: parameter
            "gene_hits" of list of type "GeneHits" -> structure: parameter
            "reaction_id" of String, parameter "smarts_id" of String,
            parameter "structural_similarity_score" of Double, parameter
            "difference_similarity_score" of Double, parameter "top_gene_hits"
-           of mapping from String to list of String, parameter "report_name"
-           of String, parameter "report_ref" of type "obj_ref" (An X/Y/Z
-           style reference @id ws)
+           of mapping from String to list of String, parameter
+           "feature_set_refs" of list of type "obj_ref" (An X/Y/Z style
+           reference @id ws), parameter "report_name" of String, parameter
+           "report_ref" of type "obj_ref" (An X/Y/Z style reference @id ws)
         """
         # ctx is the context object
         # return variables are: output
