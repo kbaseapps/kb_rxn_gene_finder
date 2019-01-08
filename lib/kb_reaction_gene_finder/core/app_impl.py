@@ -53,7 +53,7 @@ class AppImpl:
                  }
         return self.fsu.build_feature_set(params)['feature_set_ref']
 
-    def _find_best_homologs(self, query_seq_file, target_seq_file, rxn_id, genome_ref,
+    def _find_best_homologs(self, query_seq_file, target_seq_file, rxn_id,
                             noise_level=50, number_vals_to_report=5, threads=1):
         """Blast the query_seq_file against the target_seq_file and return the best hits"""
         logging.info("running blastp for {0} vs {1}".format(query_seq_file, target_seq_file))
@@ -111,12 +111,13 @@ class AppImpl:
         output = {'gene_hits': [], 'feature_set_refs': []}
         for rxn in params['reaction_set']:
             hits, genes = self.find_genes_for_rxn(rxn, feature_seq_path, params)
-            output['feature_set_refs'].append(
-                self._make_feature_set(params['workspace_name'],
-                                       params['query_genome_ref'],
-                                       params.get('feature_set_prefix', 'gene_candidates'),
-                                       rxn,
-                                       genes))
+            if genes:
+                output['feature_set_refs'].append(
+                    self._make_feature_set(params['workspace_name'],
+                                           params['query_genome_ref'],
+                                           params.get('feature_set_prefix', 'gene_candidates'),
+                                           rxn,
+                                           genes))
             output['gene_hits'].extend(hits)
         output.update(self._build_report(params['reaction_set'],
                                          output['gene_hits'],
@@ -132,15 +133,14 @@ class AppImpl:
             params.get('structural_similarity_floor', 1),
             params.get('difference_similarity_floor', 1))
         if not search_seqs:
-            return []
+            return [], []
 
-        search_fasta = f'rxn_search_{uuid.uuid4()}.fasta'
+        search_fasta = f'{self.scratch}/rxn_search_{uuid.uuid4()}.fasta'
         self._make_fasta(search_seqs, search_fasta)
 
         return self._find_best_homologs(search_fasta,
                                         genome_feature_path,
                                         reaction,
-                                        params['query_genome_ref'],
                                         params.get('blast_score_floor', 50),
                                         params.get('number_of_hits_to_report', 5))
 
