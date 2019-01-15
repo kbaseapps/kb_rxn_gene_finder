@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import re
 import os
 import time
 import unittest
 from configparser import ConfigParser
+from collections import Counter
 from pprint import pprint
 
 from kb_reaction_gene_finder.kb_reaction_gene_finderImpl import kb_reaction_gene_finder
@@ -59,11 +61,62 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
             cls.wsClient.delete_workspace({'workspace': cls.wsName})
             print('Test workspace was deleted')
 
-    def validateRetStruct(self,  inp, ret):
-        self.assertEqual( len(inp.get( 'reaction_set' )), len(ret[0].get("gene_hits",[]) ) )
-        for subl in ret[0].get( "gene_hits", [] ):
-            self.assertLessEqual( len( subl ), inp.get( 'number_of_hits_to_report', 5 ) )
+    def isGoodWSRef( self, s ):
+        if not isinstance( s, str ):
+            return( False )
+        return( bool( re.match( "^\d+\/\d+\/\d+$",s ) ) )
+
+    def checkMembers( self, d, memlist ):
+        for m in memlist:
+            self.assertIn( m, d, "{0} not found in {1}".format( m, d ) )
+        
+    def validateRetStruct( self,  inp, ret ):
+        print( "validateRetStruct, inp is" )
+        pprint( inp )
+        print( "ret is " )
+        pprint( ret )
+
+        # Make sure it is a list of structures with the correct members
+
+        self.assertIsInstance( ret, list, "return must be a list" )
+        for r in ret:
+            #for m in [ 'gene_hits', 'feature_set_refs', 'report_name', 'report_ref' ]:
+            #    self.assertIn( m, r, "{0} not found in {1}".format( m, r ) )
+            self.checkMembers( r, [ 'gene_hits', 'feature_set_refs', 'report_name', 'report_ref' ])
+            self.assertIsInstance( r.get( 'report_name' ), str, 
+                                "report_name is not string {0}".format( r ) )
+            self.assertTrue( self.isGoodWSRef( r.get( 'report_ref' ) ), 
+                                "report_ref is not a good workspace object ref: {0}".format( r ) )
+            fl = r.get( 'feature_set_refs' )
+            self.assertIsInstance( fl, list, 
+                 "feature_set_refs {0} is not list ({0})".format( fl,r ) )
+            rxns = inp.get( 'reaction_set' )
+            n_rxns = len( rxns )
+            self.assertLessEqual( len( fl ), n_rxns )
+            for f in fl:
+                self.assertTrue( self.isGoodWSRef( f ),
+                                  "{0} is not a good ws object ref ({1})".format( f, fl ) )
+            gl = r.get( 'gene_hits' )
+            self.assertIsInstance( gl, list, 
+                 "gene_hits {0} is not list ({0})".format( gl,r ) )
+            n_hits_rep = inp.get( 'number_of_hits_to_report', 10 )
+            self.assertLessEqual( len( gl ), n_rxns * n_hits_rep )
+            for g in gl:
+                self.assertIsInstance( g, dict, "gene hit {0} is not dict ({1})".format( g, gl ) )
+                self.checkMembers( g, [ 'Bit Score', 'Closest Database Gene', 'E Value',
+                                        'Genome Gene', 'Match Length', 'Mismatches',
+                                        'Percent Identity', 'Reaction ID', 'Total Gene Hits' ] )
+                self.assertIn( g.get( 'Reaction ID' ), rxns ) 
+
+            # for multiple query reactions, ensure each yields number_of_hits_to_report or less
+
+            h = Counter( [g.get( 'Reaction ID' ) for g in gl] )
+            #pprint( h.values() )
+            for v in list(h.values()):
+                self.assertLessEqual( v, n_hits_rep, "got too many hits {0} in {1}".format( v, gl ) )
+            
         print( "#return structure validated" )
+
 
     def validateRow( self, vals, e_vals ):
         self.assertEqual( vals.get( 'Database Gene' ), e_vals[1] )
@@ -81,12 +134,15 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
             for j in range(0,nrows):
                 self.validateRow( vals[j], e_vals[j] )
 
+    # return structure tests
+
     def test_find_genes_from_similar_reactions_no_rxn(self):
-       inp = {'workspace_name': self.wsName,
-              'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
-              'number_of_hits_to_report': 10
-              }
-       ret = self.serviceImpl.find_genes_from_similar_reactions( self.ctx, inp )
+        inp = {'workspace_name': self.wsName,
+               'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
+               'number_of_hits_to_report': 10
+               }
+        ret = self.serviceImpl.find_genes_from_similar_reactions( self.ctx, inp )
+        self.validateRetStruct( inp, ret )
 
     def test_find_genes_from_similar_reactions_no_hits(self):
        inp = {'workspace_name': self.wsName,
@@ -103,11 +159,24 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
               'number_of_hits_to_report': 10
               }
        ret = self.serviceImpl.find_genes_from_similar_reactions( self.ctx, inp )
+       self.validateRetStruct( inp, ret )
 
+    def test_find_genes_from_similar_reactions_2rxn_by10(self):
+       inp = {'workspace_name': self.wsName,
+              'bulk_reaction_ids': 'rxn00371\nrxn00083\nrxn04632',
+              'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
+              'number_of_hits_to_report': 10
+              }
+       ret = self.serviceImpl.find_genes_from_similar_reactions( self.ctx, inp )
+       self.validateRetStruct( inp, ret )
+
+    # return value checks
+
+    """
     def test_find_genes_from_similar_reactions_2(self):
 
        inp = {'workspace_name': self.wsName,
-              'reaction_set': ['rxn00008'],     # this reaction is not in modelseeds, but similars are
+              'reaction_set': ['rxn00008'],   # this reaction is not in modelseeds, but similars are
               'structural_similarity_floor': 0.0,
               'difference_similarity_floor': 1.0,
               'query_genome_ref': 'ReferenceDataManager/GCF_000009625.1',
@@ -115,7 +184,7 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
               }
 
        ret = self.serviceImpl.find_genes_from_similar_reactions( self.ctx, inp )
-       """self.validateRetStruct( inp, ret )
+       self.validateRetStruct( inp, ret )
        self.validateValues( inp, ret, 
          [[['MAFF_RS23790', 'MAFF_RS23790', '100.000', '361', '0', '0.0', '743'],
            ['MAFF_RS23790', 'DSHI_RS13475', '71.605', '324', '92', '0.0', '508'],
@@ -164,7 +233,7 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
     def test_find_genes_from_similar_reactions_5(self):
     
         inp = {'workspace_name': self.wsName,
-               'reaction_set': ['rxn02432'],        # singlular occurrence in ModelSEED, no equivalents
+               'reaction_set': ['rxn02432'],    # singlular occurrence in ModelSEED, no equivalents
                'structural_similarity_floor': 1.0,
                'difference_similarity_floor': 1.0,
                'query_genome_ref': 'ReferenceDataManager/GCF_000016765.1',  # occurs in this genome
