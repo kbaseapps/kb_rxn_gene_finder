@@ -104,6 +104,9 @@ class AppImpl:
 
         if not params.get('reaction_set'):
             params['reaction_set'] = []
+                                  
+        if isinstance(params['reaction_set'], str):
+            params['reaction_set'] = [params['reaction_set']]
 
         if params.get('bulk_reaction_ids'):
             params['reaction_set'] += params['bulk_reaction_ids'].split('\n')
