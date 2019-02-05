@@ -48,7 +48,7 @@ class RE_API:
         LET genes = (
             FOR g in ncbi_gene
                FILTER g._key IN gene_ids
-               RETURN {key: g._key, product: g.product, function: CONCAT_SEPARATOR(', ', g.functions), seq: g.protein_translation}
+               RETURN {key: g._key, product: g.product, function: CONCAT_SEPARATOR(', ', g.functions), sequence: g.protein_translation}
         )
         LET missing = MINUS(gene_ids, genes[*].key)
         
@@ -72,6 +72,6 @@ class RE_API:
         ret = self._call_re(params={'view': "list_genes_for_similar_reactions"}, data=body)
         if "error" in ret:
             raise RuntimeError(f"{ret['error']}: {ret.get('arango_message', '')}")
-        logging.info(f"Found {ret['results'][0]['count']} related sequences")
-        return ret['results'][0]['sequences']
+        logging.info(f"Found {len(ret['results'][0]['genes'])} related sequences")
+        return ret['results'][0]
 

@@ -167,6 +167,8 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
        inp = {'workspace_name': self.wsName,
               'bulk_reaction_ids': 'rxn00010\nrxn14379',
               'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
+              'structural_similarity_floor': 0.7,
+              'difference_similarity_floor': 0.7,
               'number_of_hits_to_report': 10
               }
        ret = self.serviceImpl.find_genes_from_similar_reactions( self.ctx, inp )

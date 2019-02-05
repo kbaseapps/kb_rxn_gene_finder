@@ -11,6 +11,13 @@ from installed_clients.KBaseReportClient import KBaseReport
 
 def _make_table_html(title, items, keys=None, empty_message="No items found"):
     """Takes a list of dicts and makes a HTML table"""
+    def _proc_val(val):
+        if isinstance(val, float):
+            val = round(val, 4)
+        elif val is None:
+            val = ''
+        return str(val)
+
     table_lines = []
     table_lines.append(f'<h4 style="text-align: center">{title}</h4>')
     if items:
@@ -21,7 +28,7 @@ def _make_table_html(title, items, keys=None, empty_message="No items found"):
         table_lines.append(f'\t<thead><tr><td>{header}</td></tr></thead>')
         table_lines.append('\t<tbody>')
         for row in items:
-            line = "</td><td>".join((str(row[k]) if row.get(k) is not None else "" for k in keys))
+            line = "</td><td>".join((_proc_val(row[k]) for k in keys))
             table_lines.append(f'\t\t<tr><td>{line}</td></tr>')
         table_lines.append('\t</tbody>')
         table_lines.append('</table>\n')
@@ -31,6 +38,10 @@ def _make_table_html(title, items, keys=None, empty_message="No items found"):
 
 
 def _make_rxn_html(arango_results, gene_hits):
+    hits_tbl = _make_table_html("Genome Hits", gene_hits,
+                                empty_message="No related genes were close matches to your genome."
+                                              " If you have 'Related Genes' you may need to change"
+                                              " the Blast Score Floor.")
     rxn_tbl = _make_table_html("Similar Reactions", arango_results.get('rxns'),
                                ('key', 'name', 'definition', 'structural similarity',
                                 'difference similarity'),
@@ -42,11 +53,12 @@ def _make_rxn_html(arango_results, gene_hits):
                                 "No genes related to the similar reactions above were found in our"
                                 " database. You may need to relax the Structural or Difference "
                                 "Similarity Floors.")
-    hits_tbl = _make_table_html("Genome Hits", gene_hits,
-                                empty_message="No related genes were close matches to your genome."
-                                              " If you have 'Related Genes' you may need to change"
-                                              " the Blast Score Floor.")
-    return "\n".join([rxn_tbl, gene_tbl, hits_tbl])
+    return "\n".join([hits_tbl, rxn_tbl, gene_tbl])
+
+
+def _find_related_reactions(gene, rxn_gene_links):
+    return [links['rxn_id'].split('/')[1] for links in rxn_gene_links
+            if gene in links['linked_gene_ids']]
 
 
 class AppImpl:
@@ -90,12 +102,12 @@ class AppImpl:
     def _make_fasta(sequences, file_path):
         """Make a FASTA file from RE query output"""
         if not sequences or not isinstance(sequences, list) or "key" not in sequences[0] \
-                or "seq" not in sequences[0]:
+                or "sequence" not in sequences[0]:
             raise ValueError(f"Unexpected input type:{sequences}")
         with open(file_path, 'w') as outfile:
             for seq in sequences:
-                if seq["seq"]:
-                    outfile.write(f'>{seq["key"]}\n{seq["seq"]}\n')
+                if seq["sequence"]:
+                    outfile.write(f'>{seq["key"]}\n{seq["sequence"]}\n')
 
     def _make_feature_set(self, workspace, genome, fs_name_prefix, reaction_id, top_genes):
         params = {'genome': genome,
@@ -107,7 +119,7 @@ class AppImpl:
                  }
         return self.fsu.build_feature_set(params)['feature_set_ref']
 
-    def _find_best_homologs(self, query_seq_file, target_seq_file, rxn_id,
+    def _find_best_homologs(self, query_seq_file, target_seq_file, rxn_gene_links,
                             noise_level=50, number_vals_to_report=5, threads=1):
         """Blast the query_seq_file against the target_seq_file and return the best hits"""
         logging.info("running blastp for {0} vs {1}".format(query_seq_file, target_seq_file))
@@ -139,8 +151,10 @@ class AppImpl:
                     top_bitscore[cols['Genome Gene']] = float(cols['Bit Score'])
 
         top_genes = [gene[0] for gene in top_bitscore.most_common(number_vals_to_report)]
-        top_records = [{"Reaction ID": rxn_id, **gene_hits[gene],
-                        "Total Gene Hits": str(gene_hit_count[gene])}
+        top_records = [{**gene_hits[gene],
+                        "Total Gene Hits": str(gene_hit_count[gene]),
+                        "Associated Reactions": ", ".join(_find_related_reactions(
+                            gene_hits[gene]['Closest Database Gene'], rxn_gene_links))}
                        for gene in top_genes]
 
         return top_records, top_genes
@@ -169,7 +183,6 @@ class AppImpl:
                                            rxn,
                                            genes))
             output['gene_hits'].extend(hits)
-            print(html)
             html_tables.append(html)
         output.update(self._build_report(reaction_ids,
                                          html_tables,
@@ -180,7 +193,7 @@ class AppImpl:
 
     def find_genes_for_rxn(self, reaction, genome_feature_path, params):
         """Finds genes for a particular reaction using RE and BLAST"""
-        arango_results = self.re_api.get_related_sequences_adhoc(
+        arango_results = self.re_api.get_related_sequences(
             reaction,
             params.get('structural_similarity_floor', 1),
             params.get('difference_similarity_floor', 1))
@@ -192,7 +205,7 @@ class AppImpl:
 
         hits, genes = self._find_best_homologs(search_fasta,
                                         genome_feature_path,
-                                        reaction,
+                                        arango_results['rxn_gene_links'],
                                         params.get('blast_score_floor', 50),
                                         params.get('number_of_hits_to_report', 5))
         html = _make_rxn_html(arango_results, hits)
