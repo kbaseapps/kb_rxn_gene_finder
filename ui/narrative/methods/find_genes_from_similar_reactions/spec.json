@@ -5,7 +5,7 @@
         "jjeffryes"
     ],
     "contact": "https://kbase.us/contact-us/",
-    "categories": ["active", "annotation"],
+    "categories": ["active", "annotation", "knowledge_engine"],
     "widgets": {
         "input": null,
         "output": "no-display"
