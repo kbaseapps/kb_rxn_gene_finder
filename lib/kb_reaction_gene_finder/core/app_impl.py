@@ -9,6 +9,46 @@ from installed_clients.GenomeFileUtilClient import GenomeFileUtil
 from installed_clients.KBaseReportClient import KBaseReport
 
 
+def _make_table_html(title, items, keys=None, empty_message="No items found"):
+    """Takes a list of dicts and makes a HTML table"""
+    table_lines = []
+    table_lines.append(f'<h4 style="text-align: center">{title}</h4>')
+    if items:
+        if not keys:
+            keys = items[0].keys()
+        table_lines.append('<table class="table table-bordered table-striped">')
+        header = "</td><td>".join(x.capitalize() for x in keys)
+        table_lines.append(f'\t<thead><tr><td>{header}</td></tr></thead>')
+        table_lines.append('\t<tbody>')
+        for row in items:
+            line = "</td><td>".join((str(row[k]) if row.get(k) is not None else "" for k in keys))
+            table_lines.append(f'\t\t<tr><td>{line}</td></tr>')
+        table_lines.append('\t</tbody>')
+        table_lines.append('</table>\n')
+    else:
+        table_lines.append(f"<p>{empty_message}<p>")
+    return "\n".join(table_lines)
+
+
+def _make_rxn_html(arango_results, gene_hits):
+    rxn_tbl = _make_table_html("Similar Reactions", arango_results.get('rxns'),
+                               ('key', 'name', 'definition', 'structural similarity',
+                                'difference similarity'),
+                               "No similar reactions were found. You may need to relax "
+                               "the Structural or Difference Similarity Floors.")
+
+    gene_tbl = _make_table_html("Related Genes", arango_results.get('genes'),
+                                ('key', 'product', 'function'),
+                                "No genes related to the similar reactions above were found in our"
+                                " database. You may need to relax the Structural or Difference "
+                                "Similarity Floors.")
+    hits_tbl = _make_table_html("Genome Hits", gene_hits,
+                                empty_message="No related genes were close matches to your genome."
+                                              " If you have 'Related Genes' you may need to change"
+                                              " the Blast Score Floor.")
+    return "\n".join([rxn_tbl, gene_tbl, hits_tbl])
+
+
 class AppImpl:
     def __init__(self, config, ctx):
         self.callback_url = os.environ['SDK_CALLBACK_URL']
@@ -31,6 +71,17 @@ class AppImpl:
         for param in params:
             if param not in defined_param:
                 logging.warning("Unexpected parameter {} supplied".format(param))
+
+        if not params.get('reaction_set'):
+            params['reaction_set'] = []
+
+        if params.get('bulk_reaction_ids'):
+            params['reaction_set'] += params['bulk_reaction_ids'].split('\n')
+
+        if not params['reaction_set']:
+            raise ValueError("No reactions to analyze")
+
+        return params['reaction_set']
 
     @staticmethod
     def _make_fasta(sequences, file_path):
@@ -92,25 +143,21 @@ class AppImpl:
         return top_records, top_genes
 
     def find_genes_from_similar_reactions(self, params):
-        self._validate_params(params, {'workspace_name', 'query_genome_ref', },
-                              {'number_of_hits_to_report', 'smarts_set', 'blast_score_floor',
-                               'structural_similarity_floor', 'difference_similarity_floor',
-                               'reaction_set', 'bulk_reaction_ids'})
+        reaction_ids = self._validate_params(
+            params, {'workspace_name', 'query_genome_ref', },
+            {'number_of_hits_to_report', 'smarts_set', 'blast_score_floor',
+            'structural_similarity_floor', 'difference_similarity_floor',
+            'reaction_set', 'bulk_reaction_ids'})
 
         feature_seq_path = self.gfu.genome_proteins_to_fasta(
             {'genome_ref': params['query_genome_ref'],
              'include_functions': True,
              'include_aliases': False})['file_path']
 
-        if not params.get('reaction_set'):
-            params['reaction_set'] = []
-
-        if params.get('bulk_reaction_ids'):
-            params['reaction_set'] += params['bulk_reaction_ids'].split('\n')
-
         output = {'gene_hits': [], 'feature_set_refs': []}
-        for rxn in params['reaction_set']:
-            hits, genes = self.find_genes_for_rxn(rxn, feature_seq_path, params)
+        html_tables = []
+        for rxn in reaction_ids:
+            hits, genes, html = self.find_genes_for_rxn(rxn, feature_seq_path, params)
             if genes:
                 output['feature_set_refs'].append(
                     self._make_feature_set(params['workspace_name'],
@@ -119,8 +166,10 @@ class AppImpl:
                                            rxn,
                                            genes))
             output['gene_hits'].extend(hits)
-        output.update(self._build_report(params['reaction_set'],
-                                         output['gene_hits'],
+            print(html)
+            html_tables.append(html)
+        output.update(self._build_report(reaction_ids,
+                                         html_tables,
                                          output['feature_set_refs'],
                                          params['workspace_name'],
                                          ))
@@ -128,27 +177,29 @@ class AppImpl:
 
     def find_genes_for_rxn(self, reaction, genome_feature_path, params):
         """Finds genes for a particular reaction using RE and BLAST"""
-        search_seqs = self.re_api.get_related_sequences(
+        arango_results = self.re_api.get_related_sequences_adhoc(
             reaction,
             params.get('structural_similarity_floor', 1),
             params.get('difference_similarity_floor', 1))
-        if not search_seqs:
-            return [], []
+        if not arango_results.get('genes'):
+            return [], [], _make_rxn_html(arango_results, [])
 
         search_fasta = f'{self.scratch}/rxn_search_{uuid.uuid4()}.fasta'
-        self._make_fasta(search_seqs, search_fasta)
+        self._make_fasta(arango_results['genes'], search_fasta)
 
-        return self._find_best_homologs(search_fasta,
+        hits, genes = self._find_best_homologs(search_fasta,
                                         genome_feature_path,
                                         reaction,
                                         params.get('blast_score_floor', 50),
                                         params.get('number_of_hits_to_report', 5))
+        html = _make_rxn_html(arango_results, hits)
+        return hits, genes, html
 
-    def _build_report(self, reactions, gene_hits, feature_sets, workspace_name):
+    def _build_report(self, reaction_ids, html_tables, feature_sets, workspace_name):
         """
-                _generate_report: generate summary report for upload
-                """
-        output_html_files = self._generate_report_html(reactions, gene_hits)
+        _generate_report: generate summary report for upload
+        """
+        output_html_files = self._generate_report_html(reaction_ids, html_tables)
 
         report_params = {
             'html_links': output_html_files,
@@ -164,44 +215,40 @@ class AppImpl:
 
         return report_output
 
-    def _generate_report_html(self, reactions, gene_hits):
+    def _generate_report_html(self, reactions, html_tables):
         """
             _generate_report: generates the HTML for the upload report
         """
-        html_report = list()
+        assert len(reactions) == len(html_tables)
 
         # Make report directory and copy over files
         output_directory = os.path.join(self.scratch, str(uuid.uuid4()))
         os.mkdir(output_directory)
         result_file_path = os.path.join(output_directory, 'find_genes_for_rxn.html')
 
-        # Build HTML tables for results
-        table_lines = []
-        table_lines.append(f'<h3 style="text-align: center">Best matching Genes</h3>')
-        if not gene_hits:
-            table_lines.append("<h5>No hits found!</h5>")
-        else:
-            table_lines.append('<table class="table table-bordered table-striped">')
-            header = "</td><td>".join(gene_hits[0].keys())
-            table_lines.append(f'\t<thead><tr><td>{header}</td></tr></thead>')
-            table_lines.append('\t<tbody>')
-            for row in gene_hits:
-                line = "</td><td>".join(row.values())
-                table_lines.append(f'\t\t<tr><td>{line}</td></tr>')
-            table_lines.append('\t</tbody>')
-            table_lines.append('</table>\n')
+        # first line is special (because it should be open)
+        first_id = reactions.pop(0)
+        lines = ['<div class="tab">',
+                 f'\t<button id="defaultOpen" class="tablinks" '
+                 f'onclick="openTab(event, \'{first_id}\')">{first_id}</button>']
+
+        lines += [f'\t<button class="tablinks" onclick="openTab(event, \'{rid}\')">{rid}</button>'
+                  for rid in reactions]
+        lines.append('</div>')
+        lines += [f'<div id={rid} class="tabcontent">\n{html}\n</div>'
+                  for rid, html in zip([first_id]+reactions, html_tables)]
 
         # Fill in template HTML
         with open(os.path.join(os.path.dirname(__file__), 'find_genes_for_rxn_template.html')
                   ) as report_template_file:
             report_template = report_template_file.read() \
-                .replace('*TABLES*', "\n".join(table_lines))
+                .replace('*TABLES*', "\n".join(lines))
 
         with open(result_file_path, 'w') as result_file:
             result_file.write(report_template)
 
-        html_report.append({'path': output_directory,
-                            'name': os.path.basename(result_file_path),
-                            'description': 'HTML report for reaction to gene candidates app'})
+        html_report = [{'path': output_directory,
+                        'name': os.path.basename(result_file_path),
+                        'description': 'HTML report for reaction to gene candidates app'}]
 
         return html_report
