@@ -72,6 +72,7 @@ class RE_API:
         ret = self._call_re(params={'view': "list_genes_for_similar_reactions"}, data=body)
         if "error" in ret:
             if retries:
+                logging.warning("Arango Query failed. Retrying")
                 return self.get_related_sequences(rid, sf_sim, df_sim, exclude_self, retries-1)
             raise RuntimeError(f"{ret['error']}: {ret.get('arango_message', '')}")
         logging.info(f"Found {len(ret['results'][0]['genes'])} related sequences")
