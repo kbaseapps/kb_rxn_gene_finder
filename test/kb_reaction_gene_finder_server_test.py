@@ -61,127 +61,110 @@ class kb_reaction_gene_finderTest(unittest.TestCase):
             cls.wsClient.delete_workspace({'workspace': cls.wsName})
             print('Test workspace was deleted')
 
-    def isGoodWSRef( self, s ):
-        if not isinstance( s, str ):
-            return( False )
-        return( bool( re.match( "^\d+\/\d+\/\d+$",s ) ) )
+    def isGoodWSRef(self, s):
+        if not isinstance(s, str):
+            return (False)
+        return (bool(re.match("^\d+\/\d+\/\d+$", s)))
 
-    def checkMembers( self, d, memlist ):
+    def checkMembers(self, d, memlist):
         for m in memlist:
-            self.assertIn( m, d, "{0} not found in {1}".format( m, d ) )
+            self.assertIn(m, d, "{0} not found in {1}".format(m, d))
 
-    def validateRetStruct( self,  inp, ret ):
-        print( "validateRetStruct, inp is" )
-        pprint( inp )
-        print( "ret is " )
-        pprint( ret )
+    def validateRetStruct(self, inp, ret):
+        print("validateRetStruct, inp is")
+        pprint(inp)
+        print("ret is ")
+        pprint(ret)
 
         # Make sure it is a list of structures with the correct members
 
-        self.assertIsInstance( ret, list, "return must be a list" )
+        self.assertIsInstance(ret, list, "return must be a list")
         for r in ret:
-            #for m in [ 'gene_hits', 'feature_set_refs', 'report_name', 'report_ref' ]:
-            #    self.assertIn( m, r, "{0} not found in {1}".format( m, r ) )
-            self.checkMembers( r, [ 'gene_hits', 'feature_set_refs', 'report_name', 'report_ref' ])
-            self.assertIsInstance( r.get( 'report_name' ), str,
-                                "report_name is not string {0}".format( r ) )
-            self.assertTrue( self.isGoodWSRef( r.get( 'report_ref' ) ),
-                                "report_ref is not a good workspace object ref: {0}".format( r ) )
-            fl = r.get( 'feature_set_refs' )
-            self.assertIsInstance( fl, list,
-                 "feature_set_refs {0} is not list ({0})".format( fl,r ) )
-            rxns = inp.get( 'reaction_set' )
-            n_rxns = len( rxns )
-            self.assertLessEqual( len( fl ), n_rxns )
+            self.checkMembers(r, ['gene_hits', 'feature_set_refs', 'report_name', 'report_ref'])
+            self.assertIsInstance(r.get('report_name'), str,
+                                  "report_name is not string {0}".format(r))
+            self.assertTrue(self.isGoodWSRef(r.get('report_ref')),
+                            f"report_ref is not a good workspace object ref: {r}")
+            fl = r.get('feature_set_refs')
+            self.assertIsInstance(fl, list,
+                                  f"feature_set_refs {fl} is not list ({fl})")
             for f in fl:
-                self.assertTrue( self.isGoodWSRef( f ),
-                                  "{0} is not a good ws object ref ({1})".format( f, fl ) )
-            gl = r.get( 'gene_hits' )
-            self.assertIsInstance( gl, list,
-                 "gene_hits {0} is not list ({0})".format( gl,r ) )
-            n_hits_rep = inp.get( 'number_of_hits_to_report', 10 )
-            self.assertLessEqual( len( gl ), n_rxns * n_hits_rep )
+                self.assertTrue(self.isGoodWSRef(f),
+                                f"{f} is not a good ws object ref ({fl})")
+            gl = r.get('gene_hits')
+            self.assertIsInstance(gl, list,
+                                  f"gene_hits {gl} is not list ({gl})")
             for g in gl:
-                self.assertIsInstance( g, dict, "gene hit {0} is not dict ({1})".format( g, gl ) )
-                self.checkMembers( g, [ 'Bit Score', 'Closest Database Gene', 'E Value',
-                                        'Genome Gene', 'Match Length', 'Mismatches',
-                                        'Percent Identity', 'Reaction ID', 'Total Gene Hits' ] )
-                self.assertIn( g.get( 'Reaction ID' ), rxns )
+                self.assertIsInstance(g, dict, f"gene hit {g} is not dict ({gl})")
+                self.checkMembers(g, ['Bit Score', 'Closest Database Gene', 'E Value',
+                                      'Genome Gene', 'Match Length', 'Mismatches',
+                                      'Percent Identity', 'Total Gene Hits'])
 
-            # for multiple query reactions, ensure each yields number_of_hits_to_report or less
+        print("#return structure validated")
 
-            h = Counter( [g.get( 'Reaction ID' ) for g in gl] )
-            #pprint( h.values() )
-            for v in list(h.values()):
-                self.assertLessEqual( v, n_hits_rep, "got too many hits {0} in {1}".format( v, gl ) )
+    def validateRow(self, vals, e_vals):
+        self.assertEqual(vals.get('Database Gene'), e_vals[1])
+        r = abs(float(vals.get('Bit Score')) - float(e_vals[-1])) / float(e_vals[-1])
+        self.assertLessEqual(r, 0.04)  # four percent tolerance
 
-        print( "#return structure validated" )
-
-
-    def validateRow( self, vals, e_vals ):
-        self.assertEqual( vals.get( 'Database Gene' ), e_vals[1] )
-        r = abs( float( vals.get( 'Bit Score' ) ) - float( e_vals[-1] ) ) / float( e_vals[-1] )
-        self.assertLessEqual( r, 0.04 )  # four percent tolerance
-
-    def validateValues( self, inp, ret, expected_vals ):
+    def validateValues(self, inp, ret, expected_vals):
         n = len(ret)
-        self.assertEqual( len( expected_vals ), n )
-        for i in range(0,n):
+        self.assertEqual(len(expected_vals), n)
+        for i in range(0, n):
             vals = ret[0].get("gene_hits")[i]
             e_vals = expected_vals[i]
-            nrows = len( e_vals )
-            self.assertEqual( nrows, len( vals ) )
-            for j in range(0,nrows):
-                self.validateRow( vals[j], e_vals[j] )
+            nrows = len(e_vals)
+            self.assertEqual(nrows, len(vals))
+            for j in range(0, nrows):
+                self.validateRow(vals[j], e_vals[j])
 
     def test_find_genes_from_similar_reactions_bad_input(self):
         with self.assertRaisesRegex(ValueError, "No reactions to analyze"):
-           inp = {'workspace_name': self.wsName,
-                  'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
-                  'number_of_hits_to_report': 10
-                  }
-           ret = self.serviceImpl.find_genes_from_similar_reactions(self.ctx, inp)
+            inp = {'workspace_name': self.wsName,
+                   'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
+                   'number_of_hits_to_report': 10
+                   }
+            ret = self.serviceImpl.find_genes_from_similar_reactions(self.ctx, inp)
         with self.assertRaisesRegex(ValueError, "workspace_name not in supplied parameters"):
-           inp = {'reaction_set': ['rxn00008'],
-                  'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
-                  'number_of_hits_to_report': 10
-                  }
-           ret = self.serviceImpl.find_genes_from_similar_reactions(self.ctx, inp)
+            inp = {'reaction_set': ['rxn00008'],
+                   'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
+                   'number_of_hits_to_report': 10
+                   }
+            ret = self.serviceImpl.find_genes_from_similar_reactions(self.ctx, inp)
         with self.assertRaisesRegex(ValueError, "query_genome_ref not in supplied parameters"):
-           inp = {'reaction_set': ['rxn00008'],
-                  'workspace_name': self.wsName,
-                  'number_of_hits_to_report': 10
-                  }
-           ret = self.serviceImpl.find_genes_from_similar_reactions(self.ctx, inp)
-
+            inp = {'reaction_set': ['rxn00008'],
+                   'workspace_name': self.wsName,
+                   'number_of_hits_to_report': 10
+                   }
+            ret = self.serviceImpl.find_genes_from_similar_reactions(self.ctx, inp)
 
     def test_find_genes_from_similar_reactions_no_hits(self):
-       inp = {'workspace_name': self.wsName,
-              'reaction_set': ['rxn01965'],
-              'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
-              'number_of_hits_to_report': 10
-              }
-       ret = self.serviceImpl.find_genes_from_similar_reactions( self.ctx, inp )
+        inp = {'workspace_name': self.wsName,
+               'reaction_set': ['rxn01965'],
+               'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
+               'number_of_hits_to_report': 10
+               }
+        ret = self.serviceImpl.find_genes_from_similar_reactions(self.ctx, inp)
 
     def test_find_genes_from_similar_reactions_string(self):
-       inp = {'workspace_name': self.wsName,
-              'bulk_reaction_ids': 'rxn00010\nrxn14379',
-              'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
-              'structural_similarity_floor': 0.7,
-              'difference_similarity_floor': 0.7,
-              'number_of_hits_to_report': 10
-              }
-       ret = self.serviceImpl.find_genes_from_similar_reactions( self.ctx, inp )
-       self.validateRetStruct( inp, ret )
+        inp = {'workspace_name': self.wsName,
+               'bulk_reaction_ids': 'rxn00010\nrxn14379',
+               'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
+               'structural_similarity_floor': 0.7,
+               'difference_similarity_floor': 0.7,
+               'number_of_hits_to_report': 10
+               }
+        ret = self.serviceImpl.find_genes_from_similar_reactions(self.ctx, inp)
+        self.validateRetStruct(inp, ret)
 
     def test_find_genes_from_similar_reactions_2rxn_by10(self):
-       inp = {'workspace_name': self.wsName,
-              'bulk_reaction_ids': 'rxn00371\nrxn00083\nrxn04632',
-              'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
-              'number_of_hits_to_report': 10
-              }
-       ret = self.serviceImpl.find_genes_from_similar_reactions( self.ctx, inp )
-       self.validateRetStruct( inp, ret )
+        inp = {'workspace_name': self.wsName,
+               'bulk_reaction_ids': 'rxn00371\nrxn00083\nrxn04632',
+               'query_genome_ref': 'ReferenceDataManager/GCF_002163935.1',
+               'number_of_hits_to_report': 10
+               }
+        ret = self.serviceImpl.find_genes_from_similar_reactions(self.ctx, inp)
+        self.validateRetStruct(inp, ret)
 
     # return value checks
 
