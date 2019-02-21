@@ -64,13 +64,15 @@ class RE_API:
         logging.info(f"Found {len(ret['results'][0]['genes'])} related sequences")
         return ret['results'][0]
 
-    def get_related_sequences(self, rid, sf_sim=1, df_sim=1, exclude_self=0):
+    def get_related_sequences(self, rid, sf_sim=1, df_sim=1, exclude_self=0, retries=2):
         if not rid.startswith('rxn_reaction/'):
             rid = 'rxn_reaction/' + rid
         body = json.dumps({'rid': rid, 'sf_sim': sf_sim, 'df_sim': df_sim,
                            'exclude_self': exclude_self})
         ret = self._call_re(params={'view': "list_genes_for_similar_reactions"}, data=body)
         if "error" in ret:
+            if retries:
+                return self.get_related_sequences(rid, sf_sim, df_sim, exclude_self, retries-1)
             raise RuntimeError(f"{ret['error']}: {ret.get('arango_message', '')}")
         logging.info(f"Found {len(ret['results'][0]['genes'])} related sequences")
         return ret['results'][0]
