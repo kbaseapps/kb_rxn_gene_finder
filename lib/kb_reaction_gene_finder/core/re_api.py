@@ -16,7 +16,7 @@ class RE_API:
         ret = requests.post(self.re_url+endpoint, data, params=params, headers=header)
         return ret.json()
 
-    def get_related_sequences_adhoc(self, rid, sf_sim=1, df_sim=1, exclude_self=0):
+    def get_related_sequences_adhoc(self, rid, sf_sim=1, df_sim=1, exclude_self=False):
         query = """
         WITH rxn_reaction
         LET ws_ids = @ws_ids
