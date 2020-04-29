@@ -10,7 +10,7 @@ class RE_API:
         self.re_url = re_url
         self.token = token
 
-    def _call_re(self, endpoint="/api/query_results/", params=None, data=None):
+    def _call_re(self, endpoint="/api/v1/query_results/", params=None, data=None):
         header = {"Authorization": self.token}
         logging.info(f"Calling RE_API with query data: {pformat(data)}")
         ret = requests.post(self.re_url+endpoint, data, params=params, headers=header)
@@ -26,4 +26,3 @@ class RE_API:
             raise RuntimeError(f"{ret['error']}: {ret.get('arango_message', '')}")
         logging.info(f"Found {ret['results'][0]['count']} related sequences")
         return ret['results'][0]['sequences']
-
