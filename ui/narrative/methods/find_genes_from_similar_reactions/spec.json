@@ -5,7 +5,7 @@
         "jjeffryes"
     ],
     "contact": "https://kbase.us/contact-us/",
-    "categories": ["active", "annotation"],
+    "categories": ["active", "annotation", "knowledge_engine"],
     "widgets": {
         "input": null,
         "output": "no-display"
@@ -15,7 +15,7 @@
             "id": "reaction_set",
             "optional": true,
             "advanced": false,
-            "allow_multiple": true,
+            "allow_multiple": false,
             "default_values": [],
             "field_type": "dynamic_dropdown",
             "dynamic_dropdown_options": {

@@ -6,7 +6,7 @@ tooltip: |
     Searches for genes that may perform a reaction based on BLAST of known genes performing similar reactions against a supplied genome
 screenshots: []
 
-icon: null
+icon: KE-orange-brain.png
 
 #
 # define a set of similar methods that might be useful to the user
