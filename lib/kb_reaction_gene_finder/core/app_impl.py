@@ -44,20 +44,21 @@ class AppImpl:
                     outfile.write(f'>{seq["key"]}\n{seq["seq"]}\n')
 
     def _make_feature_set(self, workspace, genome, fs_name_prefix, reaction_id, top_genes):
-        params = {'genome': genome,
-                  'feature_ids': top_genes,
-                  'workspace_name': workspace,
-                  'description': f'A set of the top gene candidates for {reaction_id} calculated '
-                                 f'by the "Find Candidate Genes for a Reaction" app',
-                  'output_feature_set': f'{fs_name_prefix}_{reaction_id}',
-                 }
+        params = {
+            'genome': genome,
+            'feature_ids': top_genes,
+            'workspace_name': workspace,
+            'description': f'A set of the top gene candidates for {reaction_id} calculated '
+                           f'by the "Find Candidate Genes for a Reaction" app',
+            'output_feature_set': f'{fs_name_prefix}_{reaction_id}',
+         }
         return self.fsu.build_feature_set(params)['feature_set_ref']
 
     def _find_best_homologs(self, query_seq_file, target_seq_file, rxn_id,
                             noise_level=50, number_vals_to_report=5, threads=1):
         """Blast the query_seq_file against the target_seq_file and return the best hits"""
         logging.info("running blastp for {0} vs {1}".format(query_seq_file, target_seq_file))
-        out_cols = ['sseqid', 'qseqid', 'bitscore', 'pident', 'length', 'mismatch', 'evalue',]
+        out_cols = ['sseqid', 'qseqid', 'bitscore', 'pident', 'length', 'mismatch', 'evalue']
         col_names = ['Genome Gene', 'Closest Database Gene', 'Bit Score', 'Percent Identity',
                      'Match Length', 'Mismatches', 'E Value']
 

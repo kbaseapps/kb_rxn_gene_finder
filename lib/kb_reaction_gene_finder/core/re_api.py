@@ -16,13 +16,13 @@ class RE_API:
         ret = requests.post(self.re_url+endpoint, data, params=params, headers=header)
         return ret.json()
 
-    def get_related_sequences(self, rid, sf_sim=1, df_sim=1, exclude_self=0):
+    def get_related_sequences(self, rid, sf_sim=1, df_sim=1, exclude_self=False):
         if not rid.startswith('rxn_reaction/'):
             rid = 'rxn_reaction/' + rid
         body = json.dumps({'rid': rid, 'sf_sim': sf_sim, 'df_sim': df_sim,
                            'exclude_self': exclude_self})
         ret = self._call_re(params={'view': "list_genes_for_similar_reactions"}, data=body)
+        logging.info(f"RE API results: {ret}")
         if "error" in ret:
             raise RuntimeError(f"{ret['error']}: {ret.get('arango_message', '')}")
-        logging.info(f"Found {ret['results'][0]['count']} related sequences")
         return ret['results'][0]['sequences']
